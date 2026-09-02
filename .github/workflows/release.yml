@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Verify tag and package
+        run: |
+          test "$GITHUB_REF_NAME" = "v$(cat VERSION)"
+          python scripts/check_package.py
+          python -m unittest discover -s tests -v
+          python scripts/build_release.py
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "Philomatheia $GITHUB_REF_NAME" --generate-notes

@@ -1,0 +1,69 @@
+{
+  "schema_version": "philomatheia.learning-state/0.1",
+  "project": {
+    "id": "__PROJECT_ID__",
+    "title": "__PROJECT_TITLE__",
+    "domain": "__DOMAIN__",
+    "language": "__LANGUAGE__",
+    "status": "planning",
+    "auto_commit": false,
+    "created_at": "__CREATED_AT__",
+    "updated_at": "__CREATED_AT__"
+  },
+  "learner_contract": {
+    "agency": "co-pilot",
+    "default_sequence": ["concrete", "principle", "pseudo_code", "formal_or_implementation"],
+    "new_concepts_per_loop": 2,
+    "questions_at_once": 1,
+    "notes": "learner-first reconstruction, then agent correction"
+  },
+  "goal": {
+    "statement": "__GOAL__",
+    "status": "proposed",
+    "target_node_ids": [],
+    "completion_contract": {
+      "description": "Agree on an integrative completion task",
+      "status": "pending",
+      "evidence_id": null
+    }
+  },
+  "graph": {
+    "map_version": 1,
+    "nodes": [],
+    "edges": []
+  },
+  "goal_subgraph": {
+    "revision": 0,
+    "user_approved_revision": 0,
+    "approved_fingerprint": null,
+    "nodes": []
+  },
+  "planner": {
+    "strategy": "goal_weighted_spiral_bfs",
+    "pass": 1,
+    "pass_target_level": 1,
+    "frontier": [],
+    "inserted_review_node_id": null
+  },
+  "sources": [],
+  "checkpoint": {
+    "status": "planning",
+    "session_id": null,
+    "saved_at": "__CREATED_AT__",
+    "map_version": 1,
+    "active_node_id": null,
+    "phase": "orient",
+    "last_completed_action": "Captured the initial learning goal",
+    "pending_question": null,
+    "resume_summary": "The goal is recorded; the first useful knowledge-map trunk is not agreed yet.",
+    "verified": [],
+    "blockers": ["First knowledge-map trunk not agreed"],
+    "new_evidence_ids": [],
+    "mastery_changes": [],
+    "load_response": null,
+    "pending_major_route_proposal": null,
+    "next_action": "Propose the first knowledge-map trunk and major route",
+    "open_artifacts": []
+  },
+  "session_log": []
+}

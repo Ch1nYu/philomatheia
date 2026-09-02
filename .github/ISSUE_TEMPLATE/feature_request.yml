@@ -1,0 +1,34 @@
+name: Feature request
+description: Propose a domain-general improvement with an observable learning or reliability benefit.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Learner-facing problem
+      description: Describe the concrete failure or limitation before proposing a mechanism.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or scenario
+      description: Provide a realistic scenario, state invariant, or evaluation method.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This remains useful beyond one fixed curriculum or one learner.
+          required: true
+        - label: This preserves learner approval for goals and major route changes.
+          required: true

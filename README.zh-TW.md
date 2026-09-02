@@ -1,0 +1,158 @@
+# Philomatheia
+
+[![驗證](https://github.com/Ch1nYu/philomatheia/actions/workflows/validate.yml/badge.svg)](https://github.com/Ch1nYu/philomatheia/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Agent Skill](https://img.shields.io/badge/Agent%20Skill-open%20standard-blue.svg)](https://agentskills.io/)
+
+**能為任何主題建立個人化課程，並跨 session 保存證據與精確進度的學習 Skill。**
+
+[English](README.md)
+
+Philomatheia 會把學習目標轉成可見的知識圖，用小型適應性循環教學，區分「看過、能解釋、有人引導能做、能獨立做、能遷移」，並把精確 checkpoint 保存到學習專案。它適用於 Codex 與支援開放 Agent Skills 格式的 host。
+
+> 專案狀態：`v0.1.0` alpha。狀態模型、validator 與 installer 已測試；目前還沒有對照或長期研究能證明它會改善真實學習成果。
+
+## 它解決什麼問題
+
+| 常見學習流程 | Philomatheia |
+|---|---|
+| 依固定章節前進 | 從你的目標反推真正需要的先備知識主幹 |
+| 上完課或答對一次就算完成 | 分開記錄回想、解釋、引導應用、獨立應用與遷移 |
+| 依賴舊對話找進度 | 在專案內保存可自行理解的精確 checkpoint |
+| 每個人使用同一路線 | 依實際證據調整 frontier、表示方式、提示與複習 |
+| 課程假設看不見 | 為節點、關係和重要主張保留來源 |
+
+它適合「真的想建立能力」的請求。一般資料搜尋、普通 code review、只要一次答案，或沒有學習目標的代做工作不會觸發。
+
+## 快速開始
+
+### 用 Codex 安裝
+
+請內建的 Skill Installer 從 GitHub 安裝：
+
+```text
+$skill-installer Install the philomatheia skill from https://github.com/Ch1nYu/philomatheia
+```
+
+也可以 clone 後執行 installer：
+
+```powershell
+# Windows
+git clone https://github.com/Ch1nYu/philomatheia.git
+Set-Location .\philomatheia
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+```sh
+# macOS 或 Linux
+git clone https://github.com/Ch1nYu/philomatheia.git
+cd philomatheia
+sh ./install.sh
+```
+
+installer 只會把執行 Skill 需要的檔案放進 `$HOME/.agents/skills/philomatheia`。若已存在同名 Skill，必須明確加入 `-Update` 或 `--update` 才會替換。預覽與手動安裝方式請看 [INSTALL.md](INSTALL.md)。
+
+### 開始一個學習專案
+
+用獨立資料夾開啟 Codex，輸入：
+
+```text
+$philomatheia 我想學統計學，目標是能批判性閱讀機器學習論文。我每週有四小時。請先判斷我的程度，再提出第一版知識圖路線讓我確認。
+```
+
+其他例子：
+
+```text
+$philomatheia 教我在餐廳安全點餐所需的實用日文。我有嚴重花生過敏，請把語言練習與食品安全事實分開處理。
+```
+
+```text
+$philomatheia 從這個學習專案的精確 checkpoint 繼續。先問一題短回想，不要重教已完成內容。
+```
+
+當請求符合 [SKILL.md](SKILL.md) 的學習範圍時，Codex 也可能自動啟動它。
+
+## 運作方式
+
+```text
+目標與限制
+    |
+    v
+經使用者核准的目標子圖與完成條件
+    |
+    v
+2 至 3 個 active frontier 節點，負荷過高時縮成 1 個
+    |
+    v
+回想 -> 解釋 -> 預測 -> 練習 -> 驗證 -> 整合
+    |
+    v
+證據、mastery、複習與精確 checkpoint
+    |
+    +---------------------> 下一圈螺旋
+```
+
+每個學習專案會擁有自己的 `.philomatheia/`：
+
+```text
+.philomatheia/
+|-- learning-state.json   機器可讀的唯一狀態來源
+|-- LEARNING.md           給學習者閱讀的精簡投影
+`-- artifacts/            選用的學習成果與證據
+```
+
+路線仍由學習者控制。修改目標、必要節點、目標 mastery 或完成條件時，必須重新確認；有證據支持的小型教學調整可自動進行。
+
+## 「效果」目前能證明到哪裡
+
+Philomatheia 的設計與 validator 可以驗證這些操作效果：
+
+- 新 session 能從同一個待答問題繼續，不必重建舊對話；
+- 使用大量提示後答對，不會被記成獨立 mastery；
+- 高目標權重不能跳過未達標的 prerequisite；
+- 新反證可以降低目前 mastery，同時保留歷史證據；
+- 完成需要必要目標子圖與獨立整合任務同時通過；
+- 來源衝突與未知內容會保留。
+
+本專案沒有宣稱使用後一定能提高成績、縮短學習時間、取得專業能力或改善長期記憶。現有證據、可重跑的行為測試與長期驗證方法都寫在 [EVALUATION.md](EVALUATION.md)。
+
+## 需求
+
+- Codex 或支援 Agent Skills 的 host
+- Python 3.10 以上，用於建立與驗證專案狀態
+- 核心 Python scripts 不使用第三方套件
+- Windows installer 需要 PowerShell 7；macOS/Linux 使用 POSIX shell
+
+若學習內容包含近期變化或專業資料，仍可能需要外部搜尋工具。
+
+## 本機驗證
+
+```sh
+python scripts/check_package.py
+python -m unittest discover -s tests -v
+python -m py_compile scripts/init_project.py scripts/validate_state.py scripts/check_package.py
+```
+
+GitHub Actions 也會在 Windows、macOS 與 Linux 測試套件。
+
+## Repository 結構
+
+| 路徑 | 用途 |
+|---|---|
+| `SKILL.md` | 觸發邊界與核心學習流程 |
+| `references/` | 知識圖、教學、證據、狀態、來源與領域規則 |
+| `scripts/init_project.py` | 建立隔離狀態，拒絕覆寫現有專案 |
+| `scripts/validate_state.py` | 檢查可由機器判斷的學習狀態 invariants |
+| `assets/` | 初始 JSON 與 Markdown template |
+| `agents/openai.yaml` | Codex 顯示資訊與啟動政策 |
+| `EVALUATION.md` | 現有證據、行為案例與成效驗證方法 |
+
+## 貢獻、安全與授權
+
+修改學習契約或 schema 前請讀 [CONTRIBUTING.md](CONTRIBUTING.md)。安全問題請依 [SECURITY.md](SECURITY.md) 回報，社群互動遵守 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
+
+維護者可依 [PUBLISHING.md](PUBLISHING.md) 建立公開 repository、設定 GitHub 功能並產生經驗證的 tag release。
+
+教學循環部分受到 [`ai-engineering-from-scratch`](https://github.com/rohitg00/ai-engineering-from-scratch) 固定課程體驗啟發；Philomatheia 將它延伸為使用者自訂目標與證據狀態。Skill 的漸進式結構也參考 ChongWen 的 Skill 設計文章與 OpenAI 官方 Skill 文件。套件沒有包含原課程 lesson 或 quiz。
+
+完整來源、致謝與獨立性聲明請看 [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md)。本專案採用 [MIT License](LICENSE)，Copyright © 2026 Ch1nYu。

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Philomatheia"
+  short_description: "Adaptive knowledge-map learning with evidence-based mastery"
+  default_prompt: "Use $philomatheia to map this subject and begin an evidence-based learning session at my current level."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,66 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Check public package
+        run: python scripts/check_package.py
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Compile Python scripts
+        run: python -m py_compile scripts/init_project.py scripts/validate_state.py scripts/check_package.py scripts/build_release.py
+      - name: Build release archive
+        run: python scripts/build_release.py
+
+  install-windows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preview installation
+        shell: pwsh
+        run: .\install.ps1 -DestinationRoot "$env:RUNNER_TEMP\skills" -WhatIf
+      - name: Install and update
+        shell: pwsh
+        run: |
+          .\install.ps1 -DestinationRoot "$env:RUNNER_TEMP\skills"
+          if (-not (Test-Path "$env:RUNNER_TEMP\skills\philomatheia\SKILL.md")) { throw "SKILL.md was not installed" }
+          if (Test-Path "$env:RUNNER_TEMP\skills\philomatheia\README.md") { throw "Repository-only files entered the runtime install" }
+          if (Test-Path "$env:RUNNER_TEMP\skills\philomatheia\scripts\check_package.py") { throw "Repository tooling entered the runtime install" }
+          .\install.ps1 -DestinationRoot "$env:RUNNER_TEMP\skills" -Update
+
+  install-posix:
+    name: POSIX installer on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preview installation
+        run: sh ./install.sh --dest-root "$RUNNER_TEMP/skills" --dry-run
+      - name: Install and update
+        run: |
+          sh ./install.sh --dest-root "$RUNNER_TEMP/skills"
+          test -f "$RUNNER_TEMP/skills/philomatheia/SKILL.md"
+          test ! -f "$RUNNER_TEMP/skills/philomatheia/README.md"
+          test ! -f "$RUNNER_TEMP/skills/philomatheia/scripts/check_package.py"
+          sh ./install.sh --dest-root "$RUNNER_TEMP/skills" --update
