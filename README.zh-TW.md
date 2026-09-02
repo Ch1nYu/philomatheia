@@ -147,12 +147,8 @@ GitHub Actions 也會在 Windows、macOS 與 Linux 測試套件。
 | `agents/openai.yaml` | Codex 顯示資訊與啟動政策 |
 | `EVALUATION.md` | 現有證據、行為案例與成效驗證方法 |
 
-## 貢獻、安全與授權
+## 啟發與授權
 
-修改學習契約或 schema 前請讀 [CONTRIBUTING.md](CONTRIBUTING.md)。安全問題請依 [SECURITY.md](SECURITY.md) 回報，社群互動遵守 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
+Philomatheia 受到 [`ai-engineering-from-scratch`](https://github.com/rohitg00/ai-engineering-from-scratch) 與 [ChongWen 的 Skill 設計筆記](https://www.chongwenz.cn/tech/AI/ai-skill-01/)啟發，並將概念延伸為使用者自訂的學習流程。套件不包含原課程的 lesson 或 quiz。
 
-維護者可依 [PUBLISHING.md](PUBLISHING.md) 建立公開 repository、設定 GitHub 功能並產生經驗證的 tag release。
-
-教學循環部分受到 [`ai-engineering-from-scratch`](https://github.com/rohitg00/ai-engineering-from-scratch) 固定課程體驗啟發；Philomatheia 將它延伸為使用者自訂目標與證據狀態。Skill 的漸進式結構也參考 ChongWen 的 Skill 設計文章與 OpenAI 官方 Skill 文件。套件沒有包含原課程 lesson 或 quiz。
-
-完整來源、致謝與獨立性聲明請看 [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md)。本專案採用 [MIT License](LICENSE)，Copyright © 2026 Ch1nYu。
+本專案採用 [MIT License](LICENSE)。

@@ -147,18 +147,8 @@ GitHub Actions also exercises the package on Windows, macOS, and Linux.
 | `agents/openai.yaml` | Codex UI metadata and invocation policy |
 | `EVALUATION.md` | Evidence status, behavioral scenarios, and outcome-testing method |
 
-## Contributing and security
+## Inspiration and license
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing the learning contract or state schema. Report security issues through the process in [SECURITY.md](SECURITY.md). Community participation follows [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+Philomatheia was inspired by [`ai-engineering-from-scratch`](https://github.com/rohitg00/ai-engineering-from-scratch) and [ChongWen's notes on Skill design](https://www.chongwenz.cn/tech/AI/ai-skill-01/). It generalizes the idea into a user-defined learning workflow and does not bundle the original course lessons or quizzes.
 
-Maintainers can use [PUBLISHING.md](PUBLISHING.md) to create the public repository and produce a tagged release without skipping validation.
-
-## References and acknowledgments
-
-The teaching loop was inspired in part by the prepared-course experience in [`ai-engineering-from-scratch`](https://github.com/rohitg00/ai-engineering-from-scratch), while Philomatheia generalizes the workflow to user-defined goals and evidence-based state. Its progressive-disclosure structure was also informed by ChongWen's article on Skill design and the official OpenAI Skill documentation. No course lessons or quizzes are bundled.
-
-See [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md) for exact attribution, related learning-science references, licenses, and the project's independence statement.
-
-## License
-
-Philomatheia is released under the [MIT License](LICENSE). Copyright © 2026 Ch1nYu.
+Released under the [MIT License](LICENSE).
