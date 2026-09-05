@@ -11,13 +11,14 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - Primary overview: `README.md` 與 `README.zh-TW.md`
 - `SKILL.md`: 觸發邊界、學習契約、session loop 與寫入規則
 - `EVALUATION.md`: 已有證據、行為案例與成效限制
-- `INSTALL.md`: Codex、Windows、macOS 與 Linux 安裝方法
+- `INSTALL.md`: 各 harness 的 skills 目錄、Windows/macOS/Linux 安裝與手動安裝方法
 - `references/`: 知識圖、教學、mastery、state、來源與領域規則
 - Remote: `https://github.com/Ch1nYu/philomatheia`
 
 ## Requirements
 
 - 保持 Agent Skills 相容結構，`SKILL.md` frontmatter 的 `name` 必須與資料夾名稱一致。
+- 不綁定單一 harness。文件、範例提示與安裝流程不得預設某一家 host 的呼叫語法或內建 installer；安裝路徑一律可由 `--dest-root` 或 `-DestinationRoot` 覆寫。
 - 每個學習專案的狀態只存在該專案的 `.philomatheia/`，不可自動跨專案共用 learner profile。
 - `.philomatheia/learning-state.json` 是 machine-readable source of truth；`LEARNING.md` 是精簡投影。
 - Mastery、route change 與 completion 必須受 evidence、prerequisite gate、approval fingerprint 與 integrative task 約束。
@@ -42,7 +43,7 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 ## Structure
 
 - `SKILL.md`: Skill 入口與不可違反的核心契約
-- `agents/openai.yaml`: Codex 顯示資訊與 invocation policy
+- `agents/openai.yaml`: 選用的顯示資訊與 invocation policy，只有會讀它的 harness 才使用
 - `assets/`: 初始 state 與 learner-facing Markdown templates
 - `references/`: 按需載入的教學與狀態規則
 - `scripts/init_project.py`: 建立隔離的學習專案狀態
@@ -67,6 +68,8 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - Major route payload 改變後必須更新 revision、重新取得使用者同意並重算 `approved_fingerprint`。
 - Release workflow 只在 `v*` tag 觸發，且 tag 必須等於 `v$(cat VERSION)`。
 - Runtime installer 的檔案集合刻意小於 repository；變更 allowlist 時必須同時測試「需要的檔案存在」與「repo-only 檔案未進入安裝結果」。
+- 未指定目標時，installer 會安裝到每一個已存在的 harness skills 目錄（`~/.agents/skills`、`~/.claude/skills`），沒有任何一個存在時才退回 `~/.agents/skills`。任一目標已存在且未加 `--update` 時，整批安裝在寫入前就中止。
+- PowerShell 用 `-File` 執行時不會拆解陣列參數；要一次指定多個 `-DestinationRoot` 必須改用 `-Command`。
 
 ## Progress
 

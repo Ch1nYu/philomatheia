@@ -8,7 +8,7 @@
 
 [English](README.md)
 
-Philomatheia 會把學習目標轉成可見的知識圖，用小型適應性循環教學，區分「看過、能解釋、有人引導能做、能獨立做、能遷移」，並把精確 checkpoint 保存到學習專案。它適用於 Codex 與支援開放 Agent Skills 格式的 host。
+Philomatheia 會把學習目標轉成可見的知識圖，用小型適應性循環教學，區分「看過、能解釋、有人引導能做、能獨立做、能遷移」，並把精確 checkpoint 保存到學習專案。它可以在任何從目錄載入 skill 的 agent harness 上執行，包含 Codex 與 Claude Code。
 
 > 專案狀態：`v0.1.0` alpha。狀態模型、validator 與 installer 已測試；目前還沒有對照或長期研究能證明它會改善真實學習成果。
 
@@ -26,15 +26,9 @@ Philomatheia 會把學習目標轉成可見的知識圖，用小型適應性循�
 
 ## 快速開始
 
-### 用 Codex 安裝
+### 安裝
 
-請內建的 Skill Installer 從 GitHub 安裝：
-
-```text
-$skill-installer Install the philomatheia skill from https://github.com/Ch1nYu/philomatheia
-```
-
-也可以 clone 後執行 installer：
+Clone 之後執行對應平台的 installer：
 
 ```powershell
 # Windows
@@ -50,27 +44,35 @@ cd philomatheia
 sh ./install.sh
 ```
 
-installer 只會把執行 Skill 需要的檔案放進 `$HOME/.agents/skills/philomatheia`。若已存在同名 Skill，必須明確加入 `-Update` 或 `--update` 才會替換。預覽與手動安裝方式請看 [INSTALL.md](INSTALL.md)。
+Installer 只複製執行時需要的檔案，並安裝到它偵測到的每一個 skills 目錄：
+
+| Harness | 目錄 |
+|---|---|
+| Codex | `$HOME/.agents/skills` |
+| Claude Code | `$HOME/.claude/skills` |
+| 其他 | 用 `--dest-root` 或 `-DestinationRoot` 指定 |
+
+先用 `--dry-run` 或 `-WhatIf` 預覽目標路徑。若已存在同名 Skill，必須明確加入 `--update` 或 `-Update` 才會替換。手動安裝、release 壓縮檔與其他 harness 的做法請看 [INSTALL.md](INSTALL.md)。
 
 ### 開始一個學習專案
 
-用獨立資料夾開啟 Codex，輸入：
+用獨立資料夾開啟你的 agent，然後輸入：
 
 ```text
-$philomatheia 我想學統計學，目標是能批判性閱讀機器學習論文。我每週有四小時。請先判斷我的程度，再提出第一版知識圖路線讓我確認。
+使用 philomatheia skill。我想學統計學，目標是能批判性閱讀機器學習論文。我每週有四小時。請先判斷我的程度，再提出第一版知識圖路線讓我確認。
 ```
 
 其他例子：
 
 ```text
-$philomatheia 教我在餐廳安全點餐所需的實用日文。我有嚴重花生過敏，請把語言練習與食品安全事實分開處理。
+教我在餐廳安全點餐所需的實用日文。我有嚴重花生過敏，請把語言練習與食品安全事實分開處理。
 ```
 
 ```text
-$philomatheia 從這個學習專案的精確 checkpoint 繼續。先問一題短回想，不要重教已完成內容。
+從這個學習專案的精確 checkpoint 繼續。先問一題短回想，不要重教已完成內容。
 ```
 
-當請求符合 [SKILL.md](SKILL.md) 的學習範圍時，Codex 也可能自動啟動它。
+支援明確呼叫的 harness 可以直接用名稱 `philomatheia` 啟動。當請求符合 [SKILL.md](SKILL.md) 的學習範圍時，它也會自動啟動。
 
 ## 運作方式
 
@@ -118,7 +120,7 @@ Philomatheia 的設計與 validator 可以驗證這些操作效果：
 
 ## 需求
 
-- Codex 或支援 Agent Skills 的 host
+- 任何從目錄載入 Agent Skills 的 agent harness，例如 Codex 或 Claude Code
 - Python 3.10 以上，用於建立與驗證專案狀態
 - 核心 Python scripts 不使用第三方套件
 - Windows installer 需要 PowerShell 7；macOS/Linux 使用 POSIX shell
@@ -144,7 +146,7 @@ GitHub Actions 也會在 Windows、macOS 與 Linux 測試套件。
 | `scripts/init_project.py` | 建立隔離狀態，拒絕覆寫現有專案 |
 | `scripts/validate_state.py` | 檢查可由機器判斷的學習狀態 invariants |
 | `assets/` | 初始 JSON 與 Markdown template |
-| `agents/openai.yaml` | Codex 顯示資訊與啟動政策 |
+| `agents/openai.yaml` | 提供給會讀取它的 harness 的選用顯示資訊 |
 | `EVALUATION.md` | 現有證據、行為案例與成效驗證方法 |
 
 ## 啟發與授權

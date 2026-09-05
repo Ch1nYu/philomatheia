@@ -20,6 +20,6 @@ The learning contract is consistent with established findings and frameworks aro
 
 ## Independence statement
 
-Philomatheia is an independent open-source project. It is not an official OpenAI project and is not affiliated with or endorsed by the authors or maintainers of the references above. “Codex,” “OpenAI,” and other product names remain the property of their respective owners.
+Philomatheia is an independent open-source project. It is not affiliated with, sponsored by, or endorsed by any agent-harness vendor, nor by the authors or maintainers of the references above. Host names are used only to describe where the skill can be installed. “Codex,” “OpenAI,” “Claude,” “Claude Code,” “Anthropic,” and other product names remain the property of their respective owners.
 
 No third-party course content is included. If a future contribution adds third-party code, text, data, icons, or templates, the contributor must document its source and compatible license before merge.

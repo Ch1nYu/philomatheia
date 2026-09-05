@@ -1,6 +1,6 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$DestinationRoot = (Join-Path $HOME '.agents\skills'),
+    [string[]]$DestinationRoot,
     [switch]$Update
 )
 
@@ -9,10 +9,35 @@ $ErrorActionPreference = 'Stop'
 $skillName = 'philomatheia'
 $sourcePath = $PSScriptRoot
 $sourceManifest = Join-Path $sourcePath 'SKILL.md'
-$destinationPath = Join-Path $DestinationRoot $skillName
 $runtimeFiles = @('SKILL.md')
 $runtimeDirectories = @('agents', 'assets', 'references')
 $runtimeScripts = @('init_project.py', 'validate_state.py')
+
+function Resolve-DestinationRoots {
+    if ($DestinationRoot) {
+        return @($DestinationRoot | Where-Object { $_ } | Select-Object -Unique)
+    }
+    if ($env:PHILOMATHEIA_DEST_ROOT) {
+        return @($env:PHILOMATHEIA_DEST_ROOT)
+    }
+
+    # Every known harness directory that already exists. Keys are the marker
+    # directory the harness owns; values are the skills root inside it.
+    $known = [ordered]@{
+        (Join-Path $HOME '.agents') = Join-Path $HOME (Join-Path '.agents' 'skills')
+        (Join-Path $HOME '.claude') = Join-Path $HOME (Join-Path '.claude' 'skills')
+    }
+    $found = @()
+    foreach ($marker in $known.Keys) {
+        if (Test-Path -LiteralPath $marker -PathType Container) {
+            $found += $known[$marker]
+        }
+    }
+    if ($found.Count -gt 0) {
+        return $found
+    }
+    return @(Join-Path $HOME (Join-Path '.agents' 'skills'))
+}
 
 if (-not (Test-Path -LiteralPath $sourceManifest -PathType Leaf)) {
     throw "SKILL.md was not found beside this installer: $sourceManifest"
@@ -30,14 +55,24 @@ foreach ($item in $runtimeScripts) {
     }
 }
 
-if ((Test-Path -LiteralPath $destinationPath) -and -not $Update) {
-    throw "Destination already exists: $destinationPath. Re-run with -Update to replace the installed skill."
+$roots = Resolve-DestinationRoots
+
+if (-not $Update) {
+    foreach ($root in $roots) {
+        $existing = Join-Path $root $skillName
+        if (Test-Path -LiteralPath $existing) {
+            throw "Destination already exists: $existing. Re-run with -Update to replace the installed skill."
+        }
+    }
 }
 
-if ($PSCmdlet.ShouldProcess($destinationPath, $(if ($Update) { "Update $skillName" } else { "Install $skillName" }))) {
-    New-Item -ItemType Directory -Path $DestinationRoot -Force | Out-Null
-    $stagingPath = Join-Path $DestinationRoot ('.philomatheia-stage-' + [guid]::NewGuid().ToString('N'))
-    $backupPath = Join-Path $DestinationRoot ('.philomatheia-old-' + [guid]::NewGuid().ToString('N'))
+function Install-Skill {
+    param([string]$Root)
+
+    $destinationPath = Join-Path $Root $skillName
+    New-Item -ItemType Directory -Path $Root -Force | Out-Null
+    $stagingPath = Join-Path $Root ('.philomatheia-stage-' + [guid]::NewGuid().ToString('N'))
+    $backupPath = Join-Path $Root ('.philomatheia-old-' + [guid]::NewGuid().ToString('N'))
 
     try {
         New-Item -ItemType Directory -Path $stagingPath | Out-Null
@@ -98,6 +133,19 @@ if ($PSCmdlet.ShouldProcess($destinationPath, $(if ($Update) { "Update $skillNam
     }
 
     Write-Host "$($(if ($Update) { 'Updated' } else { 'Installed' })) $skillName at $destinationPath"
-    Write-Host 'Codex usually detects the skill automatically. Restart Codex if it does not appear.'
-    Write-Host 'Invoke it with: $philomatheia'
+}
+
+$changed = $false
+foreach ($root in $roots) {
+    $destinationPath = Join-Path $root $skillName
+    $operation = if ($Update) { "Update $skillName" } else { "Install $skillName" }
+    if ($PSCmdlet.ShouldProcess($destinationPath, $operation)) {
+        Install-Skill -Root $root
+        $changed = $true
+    }
+}
+
+if ($changed) {
+    Write-Host 'Most harnesses detect a new skill automatically. Restart the agent if it does not appear.'
+    Write-Host 'Then ask it to teach or map a subject, or invoke the skill by name: philomatheia'
 }

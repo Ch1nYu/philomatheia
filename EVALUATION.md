@@ -44,7 +44,7 @@ Public documentation and release notes should not imply these outcomes without n
 
 Use an empty temporary project for each scenario.
 
-1. Invoke `$philomatheia` with the scenario and approve a bounded first route.
+1. Ask the agent to use the `philomatheia` skill with the scenario, then approve a bounded first route.
 2. Stop immediately after the first learner-facing question.
 3. Inspect `.philomatheia/learning-state.json` and run:
 
