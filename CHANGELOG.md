@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Removed the dependency on any one host's built-in skill installer. Installation is `git clone` plus the bundled script on every platform.
+- Both installers now detect every known harness skills directory that already exists (`~/.agents/skills`, `~/.claude/skills`) and install into all of them, falling back to `~/.agents/skills` when none exist. `--dest-root` and `-DestinationRoot` accept several destinations and override detection.
+- Rewrote installation documentation and prompt examples to be host-neutral. Vendor-specific invocation syntax no longer appears in the READMEs, `INSTALL.md`, or `EVALUATION.md`.
+- Broadened the independence statement to cover every agent-harness vendor.
+
 - Updated GitHub Actions to `actions/checkout@v7` and `actions/setup-python@v7`.
 - Documented the deliberate absence of third-party lint and type-check tooling in the agent handoff.
 - Removed `CONTRIBUTING.md`; the inbound license term it carried is now one line in both READMEs.
