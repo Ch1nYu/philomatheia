@@ -34,8 +34,8 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - Test: `python -m unittest discover -s tests -v`
 - Compile check: `python -m py_compile scripts/init_project.py scripts/validate_state.py scripts/check_package.py scripts/build_release.py`
 - Build release: `python scripts/build_release.py`
-- Lint: `Unknown`
-- Typecheck: `Unknown`
+- Lint: 無第三方 linter（刻意不引入 dependency）；等效 gate 為上方 package check、test 與 compile check
+- Typecheck: 無第三方 type checker（同上理由）；`py_compile` 只保證語法正確
 
 上述 package、test、compile、installer 與 release commands 已由本機及 GitHub Actions 驗證。
 
@@ -72,4 +72,4 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 
 - Current version: `0.1.0` alpha
 - Package、state tools、Windows/POSIX installers 與跨平台 CI 已通過。
-- Longitudinal learning-outcome evidence: `Unknown`
+- Longitudinal learning-outcome evidence: 尚未建立，見 `EVALUATION.md` 的驗證協定

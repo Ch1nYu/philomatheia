@@ -21,7 +21,14 @@ git clone https://github.com/Ch1nYu/philomatheia.git
 cd philomatheia
 python scripts/check_package.py
 python -m unittest discover -s tests -v
+python -m py_compile scripts/init_project.py scripts/validate_state.py scripts/check_package.py scripts/build_release.py
 ```
+
+### Lint and type checking
+
+This project intentionally ships no third-party lint or type-check configuration. The core scripts must run on a clean Python 3.10 interpreter with the standard library only, so a required linter or type checker would add a dependency that installers and hosts are not guaranteed to have.
+
+The three commands above are the equivalent gate: `check_package.py` for public package structure and links, `unittest` for state tooling behavior, and `py_compile` for syntax. Match the style of the file you are editing instead of reformatting it with an external tool. Running a formatter or type checker locally is fine as long as the pull request adds no configuration file, no new dependency, and no unrelated reformatting.
 
 ## Pull requests
 
