@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Updated GitHub Actions to `actions/checkout@v7` and `actions/setup-python@v7`.
-- Documented the deliberate absence of third-party lint and type-check tooling in the contribution guide and agent handoff.
+- Documented the deliberate absence of third-party lint and type-check tooling in the agent handoff.
 - Rewrote the publishing checklist as a verifiable pre-publication gate with explicit repository-settings commands, and corrected the first-publication step to a visibility change on the existing repository.
 
 ## [0.1.0] - 2026-09-02
@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Route approval fingerprints, prerequisite gates, review selection, source provenance, and completion invariants.
 - Zero-dependency project initializer and state validator.
 - Windows and POSIX installers with preview and explicit update modes.
-- English and Traditional Chinese public documentation, evaluation protocol, contribution guide, security policy, acknowledgments, and MIT license.
+- English and Traditional Chinese public documentation, evaluation protocol, security policy, acknowledgments, and MIT license.
 - Cross-platform GitHub Actions validation, unit tests, versioned release archives, and SHA-256 checksums.
 
 [Unreleased]: https://github.com/Ch1nYu/philomatheia/compare/v0.1.0...HEAD

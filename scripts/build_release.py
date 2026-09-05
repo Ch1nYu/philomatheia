@@ -19,7 +19,6 @@ PUBLIC_FILES = (
     "LICENSE",
     "ACKNOWLEDGMENTS.md",
     "EVALUATION.md",
-    "CONTRIBUTING.md",
     "CODE_OF_CONDUCT.md",
     "SECURITY.md",
     "CHANGELOG.md",
