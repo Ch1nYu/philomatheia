@@ -28,14 +28,6 @@ gh repo edit Ch1nYu/philomatheia `
 
 Discussions is not optional: `.github/ISSUE_TEMPLATE/config.yml` sends users to `/discussions`, and that link is dead while the feature is off.
 
-Then enable private vulnerability reporting, which [SECURITY.md](SECURITY.md) promises as the reporting channel:
-
-```powershell
-gh api -X PUT repos/Ch1nYu/philomatheia/private-vulnerability-reporting
-```
-
-Finally require the `Validate` workflow on `main`. Branch protection on a public repository is available on the free plan; configure it in repository settings under Rules, requiring the `Validate` status checks and a pull request before merge.
-
 ## First publication
 
 The repository already exists privately, so publication is a visibility change rather than a fresh push. Confirm state first:
@@ -54,6 +46,18 @@ gh repo edit Ch1nYu/philomatheia --visibility public --accept-visibility-change-
 ```
 
 Making a repository public is effectively irreversible for anything already pushed: forks, caches, and archives can retain the history even if visibility is reverted. Review the full commit history, not just the working tree, before running it.
+
+## Settings that require a public repository
+
+These two cannot be applied earlier. GitHub answers the vulnerability-reporting endpoint with `404` while the repository is private, and free-plan branch protection only applies to public repositories.
+
+Enable private vulnerability reporting, which [SECURITY.md](SECURITY.md) promises as the reporting channel:
+
+```powershell
+gh api -X PUT repos/Ch1nYu/philomatheia/private-vulnerability-reporting
+```
+
+Then require the `Validate` workflow on `main`. Configure it in repository settings under Rules, requiring the `Validate` status checks and a pull request before merge.
 
 ## First release
 
