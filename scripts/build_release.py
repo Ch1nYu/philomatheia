@@ -22,7 +22,6 @@ PUBLIC_FILES = (
     "CODE_OF_CONDUCT.md",
     "SECURITY.md",
     "CHANGELOG.md",
-    "PUBLISHING.md",
     "CITATION.cff",
     "VERSION",
     "install.ps1",

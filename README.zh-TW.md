@@ -151,4 +151,4 @@ GitHub Actions 也會在 Windows、macOS 與 Linux 測試套件。
 
 Philomatheia 受到 [`ai-engineering-from-scratch`](https://github.com/rohitg00/ai-engineering-from-scratch) 與 [ChongWen 的 Skill 設計筆記](https://www.chongwenz.cn/tech/AI/ai-skill-01/)啟發，並將概念延伸為使用者自訂的學習流程。套件不包含原課程的 lesson 或 quiz。
 
-本專案採用 [MIT License](LICENSE)。
+本專案採用 [MIT License](LICENSE)；貢獻同樣以此授權提供。

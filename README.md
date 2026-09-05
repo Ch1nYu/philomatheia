@@ -151,4 +151,4 @@ GitHub Actions also exercises the package on Windows, macOS, and Linux.
 
 Philomatheia was inspired by [`ai-engineering-from-scratch`](https://github.com/rohitg00/ai-engineering-from-scratch) and [ChongWen's notes on Skill design](https://www.chongwenz.cn/tech/AI/ai-skill-01/). It generalizes the idea into a user-defined learning workflow and does not bundle the original course lessons or quizzes.
 
-Released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE). Contributions are accepted under the same license.

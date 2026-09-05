@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Updated GitHub Actions to `actions/checkout@v7` and `actions/setup-python@v7`.
 - Documented the deliberate absence of third-party lint and type-check tooling in the agent handoff.
+- Removed `CONTRIBUTING.md`; the inbound license term it carried is now one line in both READMEs.
+- Excluded `PUBLISHING.md` from the release archive, since the checklist is for maintainers rather than users.
 - Rewrote the publishing checklist as a verifiable pre-publication gate with explicit repository-settings commands, and corrected the first-publication step to a visibility change on the existing repository.
 
 ## [0.1.0] - 2026-09-02
