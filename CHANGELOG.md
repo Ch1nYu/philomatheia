@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Limited the `Validate` push trigger to `main` and added a concurrency group, so a change is validated once instead of twice and superseded runs are cancelled.
 - Removed the dependency on any one host's built-in skill installer. Installation is `git clone` plus the bundled script on every platform.
 - Both installers now detect every known harness skills directory that already exists (`~/.agents/skills`, `~/.claude/skills`) and install into all of them, falling back to `~/.agents/skills` when none exist. `--dest-root` and `-DestinationRoot` accept several destinations and override detection.
 - Rewrote installation documentation and prompt examples to be host-neutral. Vendor-specific invocation syntax no longer appears in the READMEs, `INSTALL.md`, or `EVALUATION.md`.
