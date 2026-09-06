@@ -1,5 +1,6 @@
 # Philomatheia
 
+[![npm](https://img.shields.io/npm/v/philomatheia.svg)](https://www.npmjs.com/package/philomatheia)
 [![Validate](https://github.com/Ch1nYu/philomatheia/actions/workflows/validate.yml/badge.svg)](https://github.com/Ch1nYu/philomatheia/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agent Skill](https://img.shields.io/badge/Agent%20Skill-open%20standard-blue.svg)](https://agentskills.io/)
@@ -8,7 +9,7 @@
 
 [繁體中文](README.zh-TW.md)
 
-Philomatheia turns a learning goal into a visible knowledge map, teaches through small adaptive loops, records what the learner can actually demonstrate, and resumes from an exact checkpoint across sessions. It runs on any agent harness that loads skills from a directory, including Codex and Claude Code.
+Philomatheia turns a learning goal into a visible knowledge map, teaches through small adaptive loops, records what the learner can actually demonstrate, and resumes from an exact checkpoint across sessions. It runs on any agent that loads Agent Skills from a directory — Claude Code, Codex CLI, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Amp, Goose and more — and the installer sets it up for the ones you already have.
 
 > Project status: `v0.3.0` alpha. The state model, validators, and installers are tested. Long-term learning-outcome improvements have not yet been established by a controlled or longitudinal study.
 
@@ -150,7 +151,7 @@ The repository contains deterministic checks for these state invariants and repr
 
 ## Requirements
 
-- Any agent harness that loads Agent Skills from a directory, such as Codex or Claude Code
+- Any agent that loads Agent Skills from a directory; the installer knows twelve of them by name
 - Python 3.10 or newer for project initialization and state validation
 - No third-party Python packages for the core scripts
 - PowerShell 7 for the Windows installer, or a POSIX shell on macOS/Linux

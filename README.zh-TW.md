@@ -1,5 +1,6 @@
 # Philomatheia
 
+[![npm](https://img.shields.io/npm/v/philomatheia.svg)](https://www.npmjs.com/package/philomatheia)
 [![驗證](https://github.com/Ch1nYu/philomatheia/actions/workflows/validate.yml/badge.svg)](https://github.com/Ch1nYu/philomatheia/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agent Skill](https://img.shields.io/badge/Agent%20Skill-open%20standard-blue.svg)](https://agentskills.io/)
@@ -8,7 +9,7 @@
 
 [English](README.md)
 
-Philomatheia 會把學習目標轉成可見的知識圖，用小型適應性循環教學，區分「看過、能解釋、有人引導能做、能獨立做、能遷移」，並把精確 checkpoint 保存到學習專案。它可以在任何從目錄載入 skill 的 agent harness 上執行，包含 Codex 與 Claude Code。
+Philomatheia 會把學習目標轉成可見的知識圖，用小型適應性循環教學，區分「看過、能解釋、有人引導能做、能獨立做、能遷移」，並把精確 checkpoint 保存到學習專案。它可以在任何從目錄載入 Agent Skills 的 agent 上執行——Claude Code、Codex CLI、Cursor、Gemini CLI、GitHub Copilot、OpenCode、Amp、Goose 等等——installer 會問你要裝給哪幾個。
 
 > 專案狀態：`v0.3.0` alpha。狀態模型、validator 與 installer 已測試；目前還沒有對照或長期研究能證明它會改善真實學習成果。
 
@@ -150,7 +151,7 @@ Philomatheia 的設計與 validator 可以驗證這些操作效果：
 
 ## 需求
 
-- 任何從目錄載入 Agent Skills 的 agent harness，例如 Codex 或 Claude Code
+- 任何從目錄載入 Agent Skills 的 agent；installer 內建十二個已知 agent
 - Python 3.10 以上，用於建立與驗證專案狀態
 - 核心 Python scripts 不使用第三方套件
 - Windows installer 需要 PowerShell 7；macOS/Linux 使用 POSIX shell
