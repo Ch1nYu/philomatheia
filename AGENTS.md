@@ -27,6 +27,7 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 
 ## Commands
 
+- Harness status (no install): `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -ListTargets` / `sh ./install.sh --list`
 - Windows install preview: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -WhatIf`
 - Windows install/update: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 [-Update]`
 - POSIX install preview: `sh ./install.sh --dry-run`
@@ -50,7 +51,7 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - `scripts/validate_state.py`: 驗證 machine-checkable state invariants
 - `scripts/check_package.py`: 驗證公開套件結構與連結
 - `scripts/build_release.py`: 產生 `dist/` release zip 與 SHA-256
-- `tests/`: package 與 state tooling 的 unit tests
+- `tests/`: package、state tooling 與 installer 目標選擇的 unit tests
 - `.github/workflows/`: 跨平台 validate 與 tag release automation
 
 ## Conventions
@@ -68,7 +69,9 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - Major route payload 改變後必須更新 revision、重新取得使用者同意並重算 `approved_fingerprint`。
 - Release workflow 只在 `v*` tag 觸發，且 tag 必須等於 `v$(cat VERSION)`。
 - Runtime installer 的檔案集合刻意小於 repository；變更 allowlist 時必須同時測試「需要的檔案存在」與「repo-only 檔案未進入安裝結果」。
-- 未指定目標時，installer 會安裝到每一個已存在的 harness skills 目錄（`~/.agents/skills`、`~/.claude/skills`），沒有任何一個存在時才退回 `~/.agents/skills`。任一目標已存在且未加 `--update` 時，整批安裝在寫入前就中止。
+- Installer 不會替使用者選 harness。未指定目標時它列出已知 harness 與狀態（`installed` / `detected, not installed` / `harness not found`）並詢問；直接 Enter 等於取消。無法互動的 session（pipe、CI、`PHILOMATHEIA_NON_INTERACTIVE=1`）不猜目標，會印出狀態表並以 exit code 2 結束，必須改用 `--dest-root` / `-DestinationRoot` 或 `--all` / `-All`。
+- `--all` / `-All` 只選已存在的 harness，不會為不存在的 harness 建立目錄；一個都沒有時視為錯誤。
+- 任一目標已存在且未加 `--update` 時，非互動流程在寫入前就整批中止；互動選擇時改為逐一詢問是否替換，拒絕即整批取消。
 - PowerShell 用 `-File` 執行時不會拆解陣列參數；要一次指定多個 `-DestinationRoot` 必須改用 `-Command`。
 
 ## Progress

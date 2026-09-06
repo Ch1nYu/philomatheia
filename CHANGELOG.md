@@ -10,7 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Limited the `Validate` push trigger to `main` and added a concurrency group, so a change is validated once instead of twice and superseded runs are cancelled.
 - Removed the dependency on any one host's built-in skill installer. Installation is `git clone` plus the bundled script on every platform.
-- Both installers now detect every known harness skills directory that already exists (`~/.agents/skills`, `~/.claude/skills`) and install into all of them, falling back to `~/.agents/skills` when none exist. `--dest-root` and `-DestinationRoot` accept several destinations and override detection.
+- Both installers now ask which harnesses to install into, and install into none by default. The prompt lists every known harness with its status (`installed`, `detected, not installed`, `harness not found`) plus an entry for a directory of your own; pressing Enter cancels without touching anything. A destination that already holds an installation is replaced only after an explicit confirmation.
+- Added `--list` / `-ListTargets` to print the harness status table without installing, and `--all` / `-All` to select every harness already present.
+- A session that cannot prompt (a pipe, CI, or `PHILOMATHEIA_NON_INTERACTIVE=1`) no longer guesses a destination: it prints the status table and exits with code 2 unless `--dest-root`, `-DestinationRoot`, `--all`, or `-All` names the targets.
+- `--dest-root` and `-DestinationRoot` accept several destinations and skip the prompt.
 - Rewrote installation documentation and prompt examples to be host-neutral. Vendor-specific invocation syntax no longer appears in the READMEs, `INSTALL.md`, or `EVALUATION.md`.
 - Broadened the independence statement to cover every agent-harness vendor.
 

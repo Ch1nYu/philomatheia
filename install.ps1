@@ -1,7 +1,9 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string[]]$DestinationRoot,
-    [switch]$Update
+    [switch]$Update,
+    [switch]$All,
+    [switch]$ListTargets
 )
 
 $ErrorActionPreference = 'Stop'
@@ -13,30 +15,127 @@ $runtimeFiles = @('SKILL.md')
 $runtimeDirectories = @('agents', 'assets', 'references')
 $runtimeScripts = @('init_project.py', 'validate_state.py')
 
-function Resolve-DestinationRoots {
-    if ($DestinationRoot) {
-        return @($DestinationRoot | Where-Object { $_ } | Select-Object -Unique)
+# Harnesses this installer can recognise. Marker is the directory the harness
+# owns; Root is the personal skills directory inside it. Recognition never
+# implies selection: a destination is used only when it is chosen explicitly.
+$knownHarnesses = @(
+    [pscustomobject]@{
+        Name   = 'Codex'
+        Marker = Join-Path $HOME '.agents'
+        Root   = Join-Path $HOME (Join-Path '.agents' 'skills')
     }
-    if ($env:PHILOMATHEIA_DEST_ROOT) {
-        return @($env:PHILOMATHEIA_DEST_ROOT)
+    [pscustomobject]@{
+        Name   = 'Claude Code'
+        Marker = Join-Path $HOME '.claude'
+        Root   = Join-Path $HOME (Join-Path '.claude' 'skills')
     }
+)
 
-    # Every known harness directory that already exists. Keys are the marker
-    # directory the harness owns; values are the skills root inside it.
-    $known = [ordered]@{
-        (Join-Path $HOME '.agents') = Join-Path $HOME (Join-Path '.agents' 'skills')
-        (Join-Path $HOME '.claude') = Join-Path $HOME (Join-Path '.claude' 'skills')
-    }
-    $found = @()
-    foreach ($marker in $known.Keys) {
-        if (Test-Path -LiteralPath $marker -PathType Container) {
-            $found += $known[$marker]
+function Get-HarnessTarget {
+    foreach ($harness in $knownHarnesses) {
+        $installed = Test-Path -LiteralPath (Join-Path $harness.Root $skillName)
+        $present = Test-Path -LiteralPath $harness.Marker -PathType Container
+        if ($installed) {
+            $status = 'installed'
+        }
+        elseif ($present) {
+            $status = 'detected, not installed'
+        }
+        else {
+            $status = 'harness not found'
+        }
+        [pscustomobject]@{
+            Name      = $harness.Name
+            Root      = $harness.Root
+            Present   = $present
+            Installed = $installed
+            Status    = $status
         }
     }
-    if ($found.Count -gt 0) {
-        return $found
+}
+
+function Write-TargetTable {
+    param([object[]]$Targets, [switch]$Numbered)
+
+    $nameWidth = ($Targets.Name | Measure-Object -Property Length -Maximum).Maximum
+    $rootWidth = ($Targets.Root | Measure-Object -Property Length -Maximum).Maximum
+    for ($i = 0; $i -lt $Targets.Count; $i++) {
+        $target = $Targets[$i]
+        $prefix = if ($Numbered) { '{0,3}) ' -f ($i + 1) } else { '  ' }
+        Write-Host ('{0}{1}  {2}  {3}' -f $prefix, $target.Name.PadRight($nameWidth), $target.Root.PadRight($rootWidth), $target.Status)
     }
-    return @(Join-Path $HOME (Join-Path '.agents' 'skills'))
+}
+
+function Test-Interactive {
+    if ($env:PHILOMATHEIA_NON_INTERACTIVE) { return $false }
+    if (-not [Environment]::UserInteractive) { return $false }
+    try {
+        if ([Console]::IsInputRedirected) { return $false }
+    }
+    catch {
+        return $false
+    }
+    return $true
+}
+
+function Select-DestinationRoots {
+    $targets = @(Get-HarnessTarget)
+    $customIndex = $targets.Count + 1
+
+    Write-Host "Select where to install $skillName. Nothing is selected by default."
+    Write-Host ''
+    Write-TargetTable -Targets $targets -Numbered
+    Write-Host ('{0,3}) {1}' -f $customIndex, 'Another directory (enter the path yourself)')
+    Write-Host ''
+
+    while ($true) {
+        $answer = Read-Host 'Numbers separated by commas (for example 1,2), or Enter to cancel'
+        if ([string]::IsNullOrWhiteSpace($answer)) {
+            return @()
+        }
+
+        $tokens = $answer -split '[,\s]+' | Where-Object { $_ }
+        $chosen = [System.Collections.Generic.List[string]]::new()
+        $valid = $true
+        foreach ($token in $tokens) {
+            $number = 0
+            if (-not [int]::TryParse($token, [ref]$number) -or $number -lt 1 -or $number -gt $customIndex) {
+                Write-Host "Not a listed choice: $token"
+                $valid = $false
+                break
+            }
+            if ($number -eq $customIndex) {
+                $custom = Read-Host 'Skills directory path'
+                if ([string]::IsNullOrWhiteSpace($custom)) {
+                    Write-Host 'No path given.'
+                    $valid = $false
+                    break
+                }
+                $chosen.Add($custom.Trim())
+            }
+            else {
+                $chosen.Add($targets[$number - 1].Root)
+            }
+        }
+        if (-not $valid) { continue }
+
+        $unique = @($chosen | Select-Object -Unique)
+        if ($unique.Count -eq 0) {
+            Write-Host 'Nothing selected.'
+            continue
+        }
+        return $unique
+    }
+}
+
+function Confirm-Replacement {
+    param([string]$Path)
+
+    while ($true) {
+        $answer = Read-Host "$Path already holds an installation. Replace it? [y/N]"
+        if ([string]::IsNullOrWhiteSpace($answer) -or $answer -match '^(n|no)$') { return $false }
+        if ($answer -match '^(y|yes)$') { return $true }
+    }
 }
 
 if (-not (Test-Path -LiteralPath $sourceManifest -PathType Leaf)) {
@@ -55,21 +154,57 @@ foreach ($item in $runtimeScripts) {
     }
 }
 
-$roots = Resolve-DestinationRoots
+if ($ListTargets) {
+    Write-TargetTable -Targets @(Get-HarnessTarget)
+    return
+}
 
-if (-not $Update) {
-    foreach ($root in $roots) {
-        $existing = Join-Path $root $skillName
-        if (Test-Path -LiteralPath $existing) {
-            throw "Destination already exists: $existing. Re-run with -Update to replace the installed skill."
-        }
+$interactiveSelection = $false
+if ($DestinationRoot) {
+    $roots = @($DestinationRoot | Where-Object { $_ } | Select-Object -Unique)
+}
+elseif ($env:PHILOMATHEIA_DEST_ROOT) {
+    $roots = @($env:PHILOMATHEIA_DEST_ROOT)
+}
+elseif ($All) {
+    $roots = @(Get-HarnessTarget | Where-Object { $_.Present -or $_.Installed } | Select-Object -ExpandProperty Root)
+    if ($roots.Count -eq 0) {
+        throw 'No known harness directory exists, so -All selected nothing. Pass -DestinationRoot with the skills directory to use.'
     }
+}
+elseif (Test-Interactive) {
+    $roots = @(Select-DestinationRoots)
+    $interactiveSelection = $true
+    if ($roots.Count -eq 0) {
+        Write-Host 'Nothing selected. No changes were made.'
+        return
+    }
+}
+else {
+    Write-Host 'No destination was selected, and this session cannot prompt for one.'
+    Write-Host 'Known harness directories:'
+    Write-TargetTable -Targets @(Get-HarnessTarget)
+    [Console]::Error.WriteLine('Choose a destination with -DestinationRoot, install into every detected harness with -All, or run the installer interactively.')
+    exit 2
+}
+
+foreach ($root in $roots) {
+    if ($Update -or $WhatIfPreference) { break }
+    $existing = Join-Path $root $skillName
+    if (-not (Test-Path -LiteralPath $existing)) { continue }
+    if ($interactiveSelection) {
+        if (Confirm-Replacement -Path $existing) { continue }
+        Write-Host 'Cancelled. No changes were made.'
+        return
+    }
+    throw "Destination already exists: $existing. Re-run with -Update to replace the installed skill."
 }
 
 function Install-Skill {
     param([string]$Root)
 
     $destinationPath = Join-Path $Root $skillName
+    $replacing = Test-Path -LiteralPath $destinationPath
     New-Item -ItemType Directory -Path $Root -Force | Out-Null
     $stagingPath = Join-Path $Root ('.philomatheia-stage-' + [guid]::NewGuid().ToString('N'))
     $backupPath = Join-Path $Root ('.philomatheia-old-' + [guid]::NewGuid().ToString('N'))
@@ -132,13 +267,13 @@ function Install-Skill {
         throw "Installation verification failed: $installedManifest is missing."
     }
 
-    Write-Host "$($(if ($Update) { 'Updated' } else { 'Installed' })) $skillName at $destinationPath"
+    Write-Host "$($(if ($replacing) { 'Updated' } else { 'Installed' })) $skillName at $destinationPath"
 }
 
 $changed = $false
 foreach ($root in $roots) {
     $destinationPath = Join-Path $root $skillName
-    $operation = if ($Update) { "Update $skillName" } else { "Install $skillName" }
+    $operation = if (Test-Path -LiteralPath $destinationPath) { "Update $skillName" } else { "Install $skillName" }
     if ($PSCmdlet.ShouldProcess($destinationPath, $operation)) {
         Install-Skill -Root $root
         $changed = $true

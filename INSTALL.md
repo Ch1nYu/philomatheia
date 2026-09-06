@@ -10,7 +10,33 @@ Philomatheia is a standalone Agent Skill. It is a plain directory containing `SK
 | Claude Code | `$HOME/.claude/skills` |
 | Anything else | Whatever directory that harness documents |
 
-The installers detect the first two automatically and install into every one that already exists. For any other harness, pass its directory yourself.
+The installers recognise the first two, but never install into a harness you did not pick. For any other harness, choose the custom entry at the prompt or pass its directory yourself.
+
+## Choosing harnesses
+
+Run with no destination flags and the installer prints what it found and asks:
+
+```text
+Select where to install philomatheia. Nothing is selected by default.
+
+  1) Codex        /home/you/.agents/skills  installed
+  2) Claude Code  /home/you/.claude/skills  detected, not installed
+  3) Another directory (enter the path yourself)
+
+Numbers separated by commas (for example 1,2), or Enter to cancel:
+```
+
+Each row carries its own status:
+
+| Status | Meaning |
+|---|---|
+| `installed` | The skill is already in that directory; installing again replaces it |
+| `detected, not installed` | The harness is present on this machine, the skill is not |
+| `harness not found` | Neither the harness directory nor the skill exists there |
+
+Enter selects nothing and exits without touching anything. Answer with the numbers you want, separated by commas or spaces; the last entry asks for a directory of your own. If a chosen directory already holds an installation, the installer asks before replacing it.
+
+To see the same table without installing anything, use `--list` or `-ListTargets`.
 
 ## Windows
 
@@ -32,6 +58,22 @@ sh ./install.sh
 
 Preview the destinations with `--dry-run`. Replace an existing installation with the checked-out version by adding `--update`.
 
+## Unattended installs
+
+A session that cannot prompt — a pipe, a CI job, or `PHILOMATHEIA_NON_INTERACTIVE=1` — never guesses a destination. It prints the status table and exits with code 2 unless you name the targets:
+
+```sh
+sh ./install.sh --all            # every harness already present on this machine
+sh ./install.sh --dest-root "$HOME/.claude/skills"
+```
+
+```powershell
+pwsh -NoProfile -File .\install.ps1 -All
+pwsh -NoProfile -File .\install.ps1 -DestinationRoot "$HOME\.claude\skills"
+```
+
+`--all` installs only into harnesses that already exist; it creates nothing for a harness that is absent, and fails when none is found.
+
 ## Choosing the destination yourself
 
 Point the installer at any directory:
@@ -50,7 +92,7 @@ Repeat `--dest-root` to install into several directories in one run. In PowerShe
 pwsh -NoProfile -Command "& .\install.ps1 -DestinationRoot '$HOME\.agents\skills','$HOME\.claude\skills'"
 ```
 
-`PHILOMATHEIA_DEST_ROOT` sets a single default destination when no flag is given.
+`PHILOMATHEIA_DEST_ROOT` sets a single destination when no flag is given, and skips the prompt.
 
 ## Manual installation
 

@@ -63,6 +63,22 @@ jobs:
           try { .\install.ps1 -DestinationRoot $rootA, $rootB } catch { $refused = $true }
           if (-not $refused) { throw "Installer replaced an existing installation without -Update" }
           .\install.ps1 -DestinationRoot $rootA, $rootB -Update
+      - name: Choose harnesses instead of defaulting to them
+        shell: pwsh
+        env:
+          HOME: ${{ runner.temp }}\pshome
+          USERPROFILE: ${{ runner.temp }}\pshome
+          PHILOMATHEIA_NON_INTERACTIVE: "1"
+        run: |
+          New-Item -ItemType Directory -Path (Join-Path $HOME '.claude') -Force | Out-Null
+          .\install.ps1 -ListTargets
+          .\install.ps1
+          if ($LASTEXITCODE -eq 0) { throw "Installer picked a destination without being told to" }
+          if (Test-Path (Join-Path $HOME '.claude\skills\philomatheia')) { throw "Installer wrote to a harness nobody selected" }
+          if (Test-Path (Join-Path $HOME '.agents')) { throw "Installer created a harness directory nobody selected" }
+          .\install.ps1 -All
+          if (-not (Test-Path (Join-Path $HOME '.claude\skills\philomatheia\SKILL.md'))) { throw "-All skipped the detected harness" }
+          if (Test-Path (Join-Path $HOME '.agents')) { throw "-All created a directory for an absent harness" }
 
   install-posix:
     name: POSIX installer on ${{ matrix.os }}
@@ -82,20 +98,35 @@ jobs:
           test ! -f "$RUNNER_TEMP/skills/philomatheia/scripts/check_package.py"
           sh ./install.sh --dest-root "$RUNNER_TEMP/skills" --update
       - name: Detect every harness skills directory
+        env:
+          PHILOMATHEIA_NON_INTERACTIVE: "1"
         run: |
           fake="$RUNNER_TEMP/home"
           mkdir -p "$fake/.agents" "$fake/.claude"
-          HOME="$fake" sh ./install.sh
+          HOME="$fake" sh ./install.sh --list | grep -q "detected, not installed"
+          HOME="$fake" sh ./install.sh --all
           test -f "$fake/.agents/skills/philomatheia/SKILL.md"
           test -f "$fake/.claude/skills/philomatheia/SKILL.md"
           test ! -f "$fake/.claude/skills/philomatheia/README.md"
-          if HOME="$fake" sh ./install.sh; then
+          HOME="$fake" sh ./install.sh --list | grep -q "installed"
+          if HOME="$fake" sh ./install.sh --all; then
             echo "Installer replaced an existing installation without --update" >&2
             exit 1
           fi
-          HOME="$fake" sh ./install.sh --update
-      - name: Fall back when no harness directory exists
+          HOME="$fake" sh ./install.sh --all --update
+      - name: Choose harnesses instead of defaulting to them
+        env:
+          PHILOMATHEIA_NON_INTERACTIVE: "1"
         run: |
           bare="$RUNNER_TEMP/barehome"
-          mkdir -p "$bare"
-          HOME="$bare" sh ./install.sh --dry-run | grep -q "$bare/.agents/skills/philomatheia"
+          mkdir -p "$bare/.claude"
+          if HOME="$bare" sh ./install.sh; then
+            echo "Installer picked a destination without being told to" >&2
+            exit 1
+          fi
+          test ! -e "$bare/.claude/skills/philomatheia"
+          test ! -e "$bare/.agents"
+          if HOME="$RUNNER_TEMP/emptyhome" sh ./install.sh --all; then
+            echo "--all installed somewhere with no harness present" >&2
+            exit 1
+          fi

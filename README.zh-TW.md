@@ -44,15 +44,23 @@ cd philomatheia
 sh ./install.sh
 ```
 
-Installer 只複製執行時需要的檔案，並安裝到它偵測到的每一個 skills 目錄：
+Installer 只複製執行時需要的檔案，而且在你選擇目標之前不會安裝任何東西。它會列出已知的 harness 與各自的目前狀態，再問你要裝到哪些：
+
+```text
+Select where to install philomatheia. Nothing is selected by default.
+
+  1) Codex        /home/you/.agents/skills  installed
+  2) Claude Code  /home/you/.claude/skills  detected, not installed
+  3) Another directory (enter the path yourself)
+```
 
 | Harness | 目錄 |
 |---|---|
 | Codex | `$HOME/.agents/skills` |
 | Claude Code | `$HOME/.claude/skills` |
-| 其他 | 用 `--dest-root` 或 `-DestinationRoot` 指定 |
+| 其他 | 選最後一項，或用 `--dest-root` / `-DestinationRoot` 指定 |
 
-先用 `--dry-run` 或 `-WhatIf` 預覽目標路徑。若已存在同名 Skill，必須明確加入 `--update` 或 `-Update` 才會替換。手動安裝、release 壓縮檔與其他 harness 的做法請看 [INSTALL.md](INSTALL.md)。
+直接按 Enter 代表不選任何目標，機器維持原狀。`--list` 或 `-ListTargets` 只印出同一份狀態表而不安裝，`--all` 或 `-All` 會選取所有已存在的 harness，`--dry-run` 或 `-WhatIf` 則預覽選定的目標路徑。若已存在同名 Skill，必須加上 `--update` / `-Update`，或在提示時確認替換，才會覆蓋。手動安裝、release 壓縮檔與其他 harness 的做法請看 [INSTALL.md](INSTALL.md)。
 
 ### 開始一個學習專案
 

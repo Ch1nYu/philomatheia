@@ -44,15 +44,23 @@ cd philomatheia
 sh ./install.sh
 ```
 
-The installer copies only the runtime files and installs into every skills directory it finds:
+The installer copies only the runtime files, and installs nothing until you choose a destination. It lists the harnesses it knows about with their current status and asks which ones to use:
+
+```text
+Select where to install philomatheia. Nothing is selected by default.
+
+  1) Codex        /home/you/.agents/skills  installed
+  2) Claude Code  /home/you/.claude/skills  detected, not installed
+  3) Another directory (enter the path yourself)
+```
 
 | Harness | Directory |
 |---|---|
 | Codex | `$HOME/.agents/skills` |
 | Claude Code | `$HOME/.claude/skills` |
-| Anything else | Pass it with `--dest-root` or `-DestinationRoot` |
+| Anything else | Choose the last entry, or pass `--dest-root` / `-DestinationRoot` |
 
-Preview the destinations first with `--dry-run` or `-WhatIf`. The installer refuses to replace an existing installation unless `--update` or `-Update` is supplied. See [INSTALL.md](INSTALL.md) for manual installation, release archives, and other harnesses.
+Pressing Enter selects nothing and leaves the machine untouched. `--list` or `-ListTargets` prints the same status table without installing, `--all` or `-All` selects every harness already present, and `--dry-run` or `-WhatIf` previews the chosen destinations. The installer refuses to replace an existing installation unless `--update` or `-Update` is supplied, or you confirm the replacement at the prompt. See [INSTALL.md](INSTALL.md) for manual installation, release archives, and other harnesses.
 
 ### Start a learning project
 
