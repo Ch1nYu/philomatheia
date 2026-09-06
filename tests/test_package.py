@@ -40,6 +40,9 @@ class PackageTests(unittest.TestCase):
         self.assertIn("SKILL.md", relative)
         self.assertIn("LICENSE", relative)
         self.assertIn("scripts/validate_state.py", relative)
+        self.assertIn("scripts/init_project.py", relative)
+        self.assertNotIn("scripts/check_package.py", relative)
+        self.assertNotIn("scripts/build_release.py", relative)
         self.assertFalse(any(path.startswith(".git/") for path in relative))
         self.assertFalse(any("__pycache__" in path for path in relative))
 

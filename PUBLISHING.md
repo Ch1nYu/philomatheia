@@ -2,9 +2,15 @@
 
 Publishing changes external state. Run these steps only after the repository owner has reviewed the files and authorized making the project public.
 
+## Current state
+
+The repository is public and `v0.1.0` is tagged on `origin`. The GitHub steps below are done; they stay here as the record of what was applied and as the checklist for the next release. What remains unpublished is the npm package — see [npm publication](#npm-publication).
+
+Because `v0.1.0` is already public, a release of anything newer needs a version bump first: `VERSION`, `package.json`, `CHANGELOG.md`, and `CITATION.cff` move together, and the tag must equal `v$(cat VERSION)`.
+
 ## Pre-publication gate
 
-Complete every item before the repository becomes public. Each one is verifiable.
+Applied before the repository became public. Re-run the same items before each release; each one is verifiable.
 
 - [ ] Working tree is clean and `main` is level with `origin/main`.
 - [ ] Every commit author is the GitHub noreply address, not a private email: `git log --format='%an <%ae>' | sort -u`.
@@ -28,9 +34,11 @@ gh repo edit Ch1nYu/philomatheia `
 
 Discussions is not optional: `.github/ISSUE_TEMPLATE/config.yml` sends users to `/discussions`, and that link is dead while the feature is off.
 
-## First publication
+## First publication — done
 
-The repository already exists privately, so publication is a visibility change rather than a fresh push. Confirm state first:
+This step has been carried out; the repository is public. It is kept as the record of how it was done.
+
+The repository already existed privately, so publication was a visibility change rather than a fresh push. Confirm state first:
 
 ```powershell
 gh auth status
@@ -59,7 +67,7 @@ gh api -X PUT repos/Ch1nYu/philomatheia/private-vulnerability-reporting
 
 Then require the `Validate` workflow on `main`. Configure it in repository settings under Rules, requiring the `Validate` status checks and a pull request before merge.
 
-## First release
+## Cutting a release — `v0.1.0` done
 
 Run the full local gate:
 
@@ -69,18 +77,21 @@ python -m unittest discover -s tests -v
 python scripts/build_release.py
 ```
 
-Then create and push a version tag that exactly matches `VERSION`:
+Then create and push a version tag that exactly matches `VERSION`. A tag that already exists on `origin` is never moved; bump the version instead.
 
 ```powershell
-git tag -a v0.1.0 -m "Philomatheia v0.1.0"
-git push origin v0.1.0
+$version = Get-Content VERSION
+git tag -a "v$version" -m "Philomatheia v$version"
+git push origin "v$version"
 ```
 
 The `Release` workflow verifies the tag, rebuilds the archive, and creates the GitHub Release. Review the generated notes and release asset after the workflow completes.
 
 ## npm publication
 
-`npx philomatheia` only works once the package is on the npm registry. Publish it after the GitHub repository is public, not before: the tarball contains the same skill files, so publishing it early makes the project public through a different door.
+`npx philomatheia` only works once the package is on the npm registry. The repository is already public, so this no longer changes what is visible; what it does change is permanent.
+
+Never publish a version number that a public GitHub release already used for different code. `v0.1.0` is tagged and public, so the first npm publish must carry a bumped version.
 
 Publishing to npm is close to irreversible. A version number can never be reused, and unpublishing is only permitted within 72 hours and only when nothing depends on the package; after that the remedy is `npm deprecate`, which leaves the code in place.
 

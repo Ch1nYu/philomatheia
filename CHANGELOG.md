@@ -20,7 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `--dest-root` and `-DestinationRoot` accept several destinations and skip the prompt.
 - Rewrote installation documentation and prompt examples to be host-neutral. Vendor-specific invocation syntax no longer appears in the READMEs, `INSTALL.md`, or `EVALUATION.md`.
 - Broadened the independence statement to cover every agent-harness vendor.
-
+- The release archive no longer carries `check_package.py` and `build_release.py`, matching what `INSTALL.md` promises and what both installers already enforce.
+- Recorded in the publishing checklist that the repository is public and `v0.1.0` is tagged, so a later release requires a version bump rather than a moved tag.
 - Updated GitHub Actions to `actions/checkout@v7` and `actions/setup-python@v7`.
 - Documented the deliberate absence of third-party lint and type-check tooling in the agent handoff.
 - Removed `CONTRIBUTING.md`; the inbound license term it carried is now one line in both READMEs.

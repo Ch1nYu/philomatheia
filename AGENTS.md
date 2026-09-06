@@ -85,5 +85,9 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 ## Progress
 
 - Current version: `0.1.0` alpha
+- Repository 自 `v0.1.0` 起已是 public；`v0.1.0` tag 已推上 origin。
 - Package、state tools、Windows/POSIX installers 與跨平台 CI 已通過。
+- Installer 改為互動選擇安裝目標，預設不安裝到任何 harness；`--list` / `--all` 供非互動使用。
+- `npx philomatheia` 進入點已完成並通過端到端測試，但**尚未 publish 到 npm registry**；發佈前必須先 bump 版本，因為 `0.1.0` 這個號碼已對應公開的 GitHub release。
+- Release archive 只含 runtime scripts；`check_package.py` 與 `build_release.py` 留在 clone。
 - Longitudinal learning-outcome evidence: 尚未建立，見 `EVALUATION.md` 的驗證協定

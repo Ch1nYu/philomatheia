@@ -11,7 +11,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-RUNTIME_ITEMS = ("SKILL.md", "agents", "assets", "references", "scripts")
+RUNTIME_ITEMS = ("SKILL.md", "agents", "assets", "references")
+# Only the scripts the skill loads at runtime. Package tooling stays in the
+# clone, as INSTALL.md promises and as both installers already enforce.
+RUNTIME_SCRIPTS = ("scripts/init_project.py", "scripts/validate_state.py")
 PUBLIC_FILES = (
     "README.md",
     "README.zh-TW.md",
@@ -52,6 +55,7 @@ def iter_files() -> list[Path]:
             files.add(path)
         elif path.is_dir():
             files.update(candidate for candidate in path.rglob("*") if release_file(candidate))
+    files.update(ROOT / name for name in RUNTIME_SCRIPTS if (ROOT / name).is_file())
     files.update(ROOT / name for name in PUBLIC_FILES if (ROOT / name).is_file())
     return sorted(files, key=lambda path: path.relative_to(ROOT).as_posix())
 
