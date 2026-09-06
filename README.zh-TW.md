@@ -10,7 +10,7 @@
 
 Philomatheia 會把學習目標轉成可見的知識圖，用小型適應性循環教學，區分「看過、能解釋、有人引導能做、能獨立做、能遷移」，並把精確 checkpoint 保存到學習專案。它可以在任何從目錄載入 skill 的 agent harness 上執行，包含 Codex 與 Claude Code。
 
-> 專案狀態：`v0.2.0` alpha。狀態模型、validator 與 installer 已測試；目前還沒有對照或長期研究能證明它會改善真實學習成果。
+> 專案狀態：`v0.3.0` alpha。狀態模型、validator 與 installer 已測試；目前還沒有對照或長期研究能證明它會改善真實學習成果。
 
 ## 它解決什麼問題
 
@@ -50,25 +50,39 @@ cd philomatheia
 sh ./install.sh
 ```
 
-Installer 只複製執行時需要的檔案，而且在你選擇目標之前不會安裝任何東西。它會列出已知的 harness 與各自的目前狀態，再問你要裝到哪些：
+Installer 只複製執行時需要的檔案，而且在你選擇之前不會安裝任何東西。它會列出已知的 agent、標示哪些在你機器上，再問你要裝給誰：
 
 ```text
 Select where to install philomatheia. Nothing is selected by default.
 
-  1) Codex        /home/you/.agents/skills  installed
-  2) Claude Code  /home/you/.claude/skills  detected, not installed
-  3) Another directory (enter the path yourself)
+     AGENT                     STATUS
+  1) Claude Code               installed
+  2) Codex CLI                 found, not installed
+  3) Cursor                    found, not installed
+  4) Gemini CLI                not found
+  5) GitHub Copilot / VS Code  not found
+  6) OpenCode                  found, not installed
+  7) Amp                       not found
+  8) Goose                     not found
+  9) Roo Code                  not found
+ 10) Factory droid             not found
+ 11) pi                        not found
+ 12) OpenClaw                  not found
+
+ 13) This project only (./.agents/skills)
+ 14) Another directory (enter the path yourself)
+
+Numbers separated by commas (for example 1,2), or Enter to cancel: 2,3
+
+Installed philomatheia at /home/you/.agents/skills/philomatheia
+  serves Codex CLI, Cursor
 ```
 
-| Harness | 目錄 |
-|---|---|
-| Codex | `$HOME/.agents/skills` |
-| Claude Code | `$HOME/.claude/skills` |
-| 其他 | 選最後一項，或用 `--dest-root` / `-DestinationRoot` 指定 |
+大多數 agent 讀同一個跨廠商目錄，所以一次選好幾個通常只會寫入一次。直接按 Enter 代表不選，機器維持原狀。
 
-直接按 Enter 代表不選任何目標，機器維持原狀。`--list` 或 `-ListTargets` 只印出同一份狀態表而不安裝，`--all` 或 `-All` 會選取所有已存在的 harness，`--dry-run` 或 `-WhatIf` 則預覽選定的目標路徑。若已存在同名 Skill，必須加上 `--update` / `-Update`，或在提示時確認替換，才會覆蓋。
+想跳過選單就用 `--agent claude-code`，可重複指定。`--list` 只印狀態表不安裝，`--all` 選取這台機器上找得到的所有 agent，`--dry-run` 預覽，`--update` 覆蓋既有安裝。`npx philomatheia` 在所有平台（含 Windows）都用同一組參數；直接跑 `install.ps1` 則是 `-Agent`、`-ListTargets`、`-All`、`-WhatIf`、`-Update`。
 
-`npx philomatheia` 在所有平台使用同一組參數：`npx philomatheia --list`、`--all`、`--update`、`--dry-run`、`--dest-root PATH`。手動安裝、release 壓縮檔與其他 harness 的做法請看 [INSTALL.md](INSTALL.md)。
+完整的 agent 與目錄對照、手動安裝、release 壓縮檔，以及這個 installer 還不認識的 agent 怎麼處理，請看 [INSTALL.md](INSTALL.md)。
 
 ### 開始一個學習專案
 

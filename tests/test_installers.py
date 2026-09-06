@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -12,6 +13,36 @@ ROOT = Path(__file__).resolve().parents[1]
 SH = shutil.which("sh")
 PWSH = shutil.which("pwsh")
 NODE = shutil.which("node")
+
+SH_AGENT_PATTERN = re.compile(
+    r'^(?:known_agents=")?([a-z0-9-]+)\|([^|]+)\|\$(?:HOME|config_home)/([^|]+)\|\$(\w+)"?$', re.M
+)
+PS_AGENT_PATTERN = re.compile(
+    r"New-Agent '([a-z0-9-]+)' '([^']+)' \(Join-Path \$(?:HOME|configHome) '([^']+)'\) \$(\w+)"
+)
+
+
+def normalise(symbol: str) -> str:
+    return symbol.replace("_", "").lower()
+
+
+def sh_agents() -> list[tuple[str, str, str, str]]:
+    text = (ROOT / "install.sh").read_text(encoding="utf-8")
+    return [
+        (slug, name, marker, normalise(root))
+        for slug, name, marker, root in SH_AGENT_PATTERN.findall(text)
+    ]
+
+
+def ps_agents() -> list[tuple[str, str, str, str]]:
+    text = (ROOT / "install.ps1").read_text(encoding="utf-8")
+    return [
+        (slug, name, marker, normalise(root))
+        for slug, name, marker, root in PS_AGENT_PATTERN.findall(text)
+    ]
+
+
+AGENT_COUNT = len(sh_agents())
 
 # The installer's function block ends where argument parsing begins. Sourcing
 # only that block lets a test drive the selection prompt with a stubbed reader.
@@ -28,9 +59,9 @@ function Read-Host {
     return $script:queue.Dequeue()
 }
 . $Functions
-$chosen = @(Select-DestinationRoots)
+[void](Select-Destinations)
 Write-Output 'SELECTED'
-foreach ($root in $chosen) { Write-Output $root }
+foreach ($root in $roots) { Write-Output $root }
 """
 
 DRIVER = """. "$1"
@@ -51,9 +82,35 @@ printf 'SELECTED\\n%s' "$dest_roots"
 def sh_environment(home: Path) -> dict[str, str]:
     environment = dict(os.environ)
     environment["HOME"] = str(home)
+    # Keep the XDG-style agents inside the fixture instead of the real home.
+    environment["XDG_CONFIG_HOME"] = str(home / ".config")
     environment.pop("PHILOMATHEIA_DEST_ROOT", None)
     environment.pop("PHILOMATHEIA_NON_INTERACTIVE", None)
     return environment
+
+
+class AgentRegistryTests(unittest.TestCase):
+    """The two installers carry the same table, so it must not drift."""
+
+    def test_both_installers_list_the_same_agents(self):
+        posix = sh_agents()
+        windows = ps_agents()
+        self.assertTrue(posix, "no agents parsed from install.sh")
+        self.assertEqual(posix, windows)
+
+    def test_every_agent_is_documented_and_reachable(self):
+        slugs = [slug for slug, _, _, _ in sh_agents()]
+        self.assertEqual(len(slugs), len(set(slugs)))
+
+        shim = (ROOT / "bin" / "philomatheia.js").read_text(encoding="utf-8")
+        install_doc = (ROOT / "INSTALL.md").read_text(encoding="utf-8")
+        for slug in slugs:
+            self.assertIn(slug, shim, f"{slug} is missing from the npx help")
+            self.assertIn(slug, install_doc, f"{slug} is missing from INSTALL.md")
+
+    def test_agents_are_grouped_into_the_documented_directories(self):
+        roots = {root for _, _, _, root in sh_agents()}
+        self.assertEqual(roots, {"claudedir", "crossagentdir", "configagentdir"})
 
 
 @unittest.skipUnless(SH, "POSIX shell is unavailable")
@@ -106,30 +163,58 @@ class PosixInstallerSelectionTests(unittest.TestCase):
     def test_empty_answer_selects_nothing(self):
         self.assertEqual(self.select(""), [])
 
-    def test_numbers_select_the_listed_harnesses(self):
+    def test_numbers_select_the_listed_agents(self):
         chosen = self.select("1,2")
-        self.assertEqual(chosen, [self.skills_root(".agents"), self.skills_root(".claude")])
+        self.assertEqual(chosen, [self.skills_root(".claude"), self.skills_root(".agents")])
+
+    def test_agents_sharing_a_directory_are_installed_once(self):
+        # Codex CLI and Cursor both read the cross-agent directory.
+        self.assertEqual(self.select("2,3"), [self.skills_root(".agents")])
 
     def test_repeated_choice_is_collapsed(self):
-        self.assertEqual(self.select("2 2"), [self.skills_root(".claude")])
+        self.assertEqual(self.select("1 1"), [self.skills_root(".claude")])
 
     def test_invalid_choice_is_rejected_and_asked_again(self):
-        self.assertEqual(self.select("9|abc|2"), [self.skills_root(".claude")])
+        self.assertEqual(self.select("99|abc|1"), [self.skills_root(".claude")])
+
+    def test_project_entry_installs_beside_the_working_directory(self):
+        chosen = self.select(str(AGENT_COUNT + 1))
+        self.assertEqual(len(chosen), 1)
+        self.assertTrue(chosen[0].endswith("/.agents/skills"), chosen)
 
     def test_last_entry_asks_for_a_custom_directory(self):
         custom = str(self.directory / "custom skills")
-        self.assertEqual(self.select("3|" + custom), [custom])
+        self.assertEqual(self.select(f"{AGENT_COUNT + 2}|" + custom), [custom])
 
-    def test_status_reports_installed_and_missing_harnesses(self):
+    def test_status_reports_installed_and_missing_agents(self):
         listed = self.run_installer("--list")
         self.assertEqual(listed.returncode, 0, listed.stderr)
-        self.assertRegex(listed.stdout, r"Codex.*harness not found")
-        self.assertRegex(listed.stdout, r"Claude Code.*detected, not installed")
+        self.assertRegex(listed.stdout, r"Codex CLI\s+not found")
+        self.assertRegex(listed.stdout, r"Claude Code\s+found, not installed")
 
         installed = self.run_installer("--all")
         self.assertEqual(installed.returncode, 0, installed.stderr)
         listed = self.run_installer("--list")
-        self.assertRegex(listed.stdout, r"Claude Code.*installed")
+        self.assertRegex(listed.stdout, r"Claude Code\s+installed")
+
+    def test_named_agents_resolve_to_one_shared_directory(self):
+        installed = self.run_installer("--agent", "codex", "--agent", "cursor")
+        self.assertEqual(installed.returncode, 0, installed.stderr)
+        self.assertIn("serves Codex CLI, Cursor", installed.stdout)
+        self.assertEqual(installed.stdout.count("Installed philomatheia"), 1)
+
+    def test_unknown_agent_is_refused(self):
+        completed = self.run_installer("--agent", "not-an-agent")
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("Unknown agent", completed.stderr)
+
+    def test_all_ignores_agents_that_are_not_present(self):
+        # Installing for Claude Code must not make every agent look present.
+        self.run_installer("--agent", "codex")
+        listed = self.run_installer("--list")
+        self.assertRegex(listed.stdout, r"Cursor\s+installed")
+        everything = self.run_installer("--all", "--update")
+        self.assertNotIn("Cursor", everything.stdout)
 
     def test_no_destination_is_used_without_a_choice(self):
         environment = sh_environment(self.home)
@@ -165,6 +250,7 @@ class WindowsInstallerSelectionTests(unittest.TestCase):
         environment = dict(os.environ)
         environment["HOME"] = str(self.home)
         environment["USERPROFILE"] = str(self.home)
+        environment["XDG_CONFIG_HOME"] = str(self.home / ".config")
         completed = subprocess.run(
             [
                 PWSH,
@@ -190,26 +276,30 @@ class WindowsInstallerSelectionTests(unittest.TestCase):
     def test_empty_answer_selects_nothing(self):
         self.assertEqual(self.select(""), [])
 
-    def test_numbers_select_the_listed_harnesses(self):
+    def test_numbers_select_the_listed_agents(self):
         self.assertEqual(
             self.select("1,2"),
-            [self.skills_root(".agents"), self.skills_root(".claude")],
+            [self.skills_root(".claude"), self.skills_root(".agents")],
         )
 
+    def test_agents_sharing_a_directory_are_installed_once(self):
+        self.assertEqual(self.select("2,3"), [self.skills_root(".agents")])
+
     def test_repeated_choice_is_collapsed(self):
-        self.assertEqual(self.select("2 2"), [self.skills_root(".claude")])
+        self.assertEqual(self.select("1 1"), [self.skills_root(".claude")])
 
     def test_invalid_choice_is_rejected_and_asked_again(self):
-        self.assertEqual(self.select("9|abc|2"), [self.skills_root(".claude")])
+        self.assertEqual(self.select("99|abc|1"), [self.skills_root(".claude")])
 
     def test_last_entry_asks_for_a_custom_directory(self):
         custom = str(self.directory / "custom skills")
-        self.assertEqual(self.select("3|" + custom), [custom])
+        self.assertEqual(self.select(f"{AGENT_COUNT + 2}|" + custom), [custom])
 
     def run_installer(self, *arguments: str):
         environment = dict(os.environ)
         environment["HOME"] = str(self.home)
         environment["USERPROFILE"] = str(self.home)
+        environment["XDG_CONFIG_HOME"] = str(self.home / ".config")
         environment["PHILOMATHEIA_NON_INTERACTIVE"] = "1"
         environment.pop("PHILOMATHEIA_DEST_ROOT", None)
         return subprocess.run(
@@ -219,16 +309,26 @@ class WindowsInstallerSelectionTests(unittest.TestCase):
             env=environment,
         )
 
-    def test_status_reports_installed_and_missing_harnesses(self):
+    def test_status_reports_installed_and_missing_agents(self):
         listed = self.run_installer("-ListTargets")
         self.assertEqual(listed.returncode, 0, listed.stderr)
-        self.assertRegex(listed.stdout, r"Codex.*harness not found")
-        self.assertRegex(listed.stdout, r"Claude Code.*detected, not installed")
+        self.assertRegex(listed.stdout, r"Codex CLI\s+not found")
+        self.assertRegex(listed.stdout, r"Claude Code\s+found, not installed")
 
         installed = self.run_installer("-All")
         self.assertEqual(installed.returncode, 0, installed.stderr)
         listed = self.run_installer("-ListTargets")
-        self.assertRegex(listed.stdout, r"Claude Code.*installed")
+        self.assertRegex(listed.stdout, r"Claude Code\s+installed")
+
+    def test_named_agents_resolve_to_one_shared_directory(self):
+        installed = self.run_installer("-Agent", "codex")
+        self.assertEqual(installed.returncode, 0, installed.stderr)
+        self.assertIn("serves Codex CLI", installed.stdout)
+
+    def test_unknown_agent_is_refused(self):
+        completed = self.run_installer("-Agent", "not-an-agent")
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("Unknown agent", completed.stdout + completed.stderr)
 
     def test_no_destination_is_used_without_a_choice(self):
         completed = self.run_installer()
@@ -252,6 +352,7 @@ class NpmEntryPointTests(unittest.TestCase):
         environment = dict(os.environ)
         environment["HOME"] = str(self.home)
         environment["USERPROFILE"] = str(self.home)
+        environment["XDG_CONFIG_HOME"] = str(self.home / ".config")
         environment["PHILOMATHEIA_NON_INTERACTIVE"] = "1"
         environment.pop("PHILOMATHEIA_DEST_ROOT", None)
         return subprocess.run(
@@ -265,7 +366,7 @@ class NpmEntryPointTests(unittest.TestCase):
         listed = self.run_shim("--list")
         self.assertEqual(listed.returncode, 0, listed.stderr)
         self.assertIn("Claude Code", listed.stdout)
-        self.assertIn("detected, not installed", listed.stdout)
+        self.assertIn("found, not installed", listed.stdout)
 
     def test_destination_is_installed_and_replacement_needs_update(self):
         destination = self.directory / "skills root"

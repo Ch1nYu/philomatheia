@@ -11,17 +11,22 @@ const path = require("node:path");
 const packageRoot = path.resolve(__dirname, "..");
 
 const USAGE = [
-  "Usage: npx philomatheia [--dest-root PATH]... [--all] [--list] [--update] [--dry-run]",
+  "Usage: npx philomatheia [--agent NAME]... [--dest-root PATH]... [--all] [--list] [--update] [--dry-run]",
   "",
-  "Installs the Philomatheia skill into the agent skills directories you choose.",
-  "No destination is used by default: with no --dest-root and no --all, the",
-  "installer lists the known harnesses with their status and asks which to use.",
+  "Installs the Philomatheia skill for the agents you choose. No agent is chosen",
+  "by default: with no --agent, --dest-root, or --all, the installer lists the",
+  "agents it knows about with their status and asks which to use.",
   "",
+  "  --agent NAME      install for this agent; repeat for several",
   "  --dest-root PATH  install into PATH; repeat for several directories",
-  "  --all             install into every known harness directory that exists",
-  "  --list            print the harness status table and exit",
+  "  --all             install for every agent found on this machine",
+  "  --list            print the agent status table and exit",
   "  --update          replace an existing installation",
   "  --dry-run         print what would be installed and exit",
+  "",
+  "Agent names: claude-code, codex, cursor, gemini, copilot, opencode, amp,",
+  "goose, roo, factory, pi, openclaw. Several agents usually share one",
+  "directory, which is written once.",
 ].join("\n");
 
 function fail(message) {
@@ -30,10 +35,16 @@ function fail(message) {
 }
 
 function parseArguments(argv) {
-  const options = { destRoots: [], all: false, list: false, update: false, dryRun: false };
+  const options = { agents: [], destRoots: [], all: false, list: false, update: false, dryRun: false };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
-    if (argument === "--dest-root") {
+    if (argument === "--agent") {
+      index += 1;
+      if (index >= argv.length) {
+        fail("--agent needs a name.");
+      }
+      options.agents.push(argv[index]);
+    } else if (argument === "--dest-root") {
       index += 1;
       if (index >= argv.length) {
         fail("--dest-root needs a directory.");
@@ -59,6 +70,9 @@ function parseArguments(argv) {
 
 function posixInvocation(options) {
   const args = [path.join(packageRoot, "install.sh")];
+  for (const agent of options.agents) {
+    args.push("--agent", agent);
+  }
   for (const root of options.destRoots) {
     args.push("--dest-root", root);
   }
@@ -97,6 +111,9 @@ function windowsInvocation(options) {
   // -File does not split array parameters, so the script is invoked through
   // -Command to keep several -DestinationRoot values working.
   const parts = ["&", quoteForPowerShell(path.join(packageRoot, "install.ps1"))];
+  if (options.agents.length > 0) {
+    parts.push("-Agent", options.agents.map(quoteForPowerShell).join(","));
+  }
   if (options.destRoots.length > 0) {
     parts.push("-DestinationRoot", options.destRoots.map(quoteForPowerShell).join(","));
   }

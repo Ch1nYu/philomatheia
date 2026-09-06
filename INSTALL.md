@@ -1,64 +1,116 @@
 # Install Philomatheia
 
-Philomatheia is a standalone Agent Skill. It is a plain directory containing `SKILL.md` plus the reference, asset, and script files it loads on demand. Any agent harness that reads skills from a directory can run it. Nothing in the skill is tied to one vendor or to a built-in installer.
+Philomatheia is a standalone Agent Skill: a plain directory containing `SKILL.md` plus the reference, asset, and script files it loads on demand. Any agent that reads [Agent Skills](https://agentskills.io/) from a directory can run it.
 
-## Where skills live
+The fastest path needs Node 18 or newer and no clone:
 
-| Harness | Personal skills directory |
-|---|---|
-| Codex | `$HOME/.agents/skills` |
-| Claude Code | `$HOME/.claude/skills` |
-| Anything else | Whatever directory that harness documents |
+```sh
+npx philomatheia
+```
 
-The installers recognise the first two, but never install into a harness you did not pick. For any other harness, choose the custom entry at the prompt or pass its directory yourself.
+It lists the agents it knows about, marks which ones are on your machine, and installs only for the ones you pick.
 
-## Choosing harnesses
-
-Run with no destination flags and the installer prints what it found and asks:
+## Choosing agents
 
 ```text
 Select where to install philomatheia. Nothing is selected by default.
 
-  1) Codex        /home/you/.agents/skills  installed
-  2) Claude Code  /home/you/.claude/skills  detected, not installed
-  3) Another directory (enter the path yourself)
+     AGENT                     STATUS
+  1) Claude Code               installed
+  2) Codex CLI                 found, not installed
+  3) Cursor                    found, not installed
+  4) Gemini CLI                not found
+  5) GitHub Copilot / VS Code  not found
+  6) OpenCode                  found, not installed
+  7) Amp                       not found
+  8) Goose                     not found
+  9) Roo Code                  not found
+ 10) Factory droid             not found
+ 11) pi                        not found
+ 12) OpenClaw                  not found
 
-Numbers separated by commas (for example 1,2), or Enter to cancel:
+ 13) This project only (./.agents/skills)
+ 14) Another directory (enter the path yourself)
+
+Numbers separated by commas (for example 1,2), or Enter to cancel: 2,3
 ```
 
 Each row carries its own status:
 
 | Status | Meaning |
 |---|---|
-| `installed` | The skill is already in that directory; installing again replaces it |
-| `detected, not installed` | The harness is present on this machine, the skill is not |
-| `harness not found` | Neither the harness directory nor the skill exists there |
+| `installed` | The directory this agent reads already holds the skill |
+| `found, not installed` | The agent is on this machine, the skill is not |
+| `not found` | The agent's configuration directory is absent — you can still select it |
 
-Enter selects nothing and exits without touching anything. Answer with the numbers you want, separated by commas or spaces; the last entry asks for a directory of your own. If a chosen directory already holds an installation, the installer asks before replacing it.
+Enter selects nothing and exits without touching anything. Answer with the numbers you want, separated by commas or spaces. If a chosen directory already holds an installation, the installer asks before replacing it.
 
-To see the same table without installing anything, use `--list` or `-ListTargets`.
+## One directory, many agents
+
+Most agents read the same cross-agent directory, so choosing several of them writes once:
+
+```text
+Installed philomatheia at /home/you/.agents/skills/philomatheia
+  serves Codex CLI, Cursor
+```
+
+Three directories cover the whole list. Each mapping comes from that agent's own documentation:
+
+| Directory | Agents that read it |
+|---|---|
+| `$HOME/.agents/skills` | Codex CLI, Cursor, Gemini CLI, GitHub Copilot / VS Code, OpenCode, Roo Code, Factory droid, pi, OpenClaw |
+| `$HOME/.claude/skills` | Claude Code |
+| `$XDG_CONFIG_HOME/agents/skills` (`~/.config/agents/skills`) | Amp, Goose |
+
+Several of these agents read more than one location; the installer writes to the one each agent's documentation names first, so a single copy is enough.
+
+## Naming agents directly
+
+Skip the prompt with `--agent`, repeated as needed:
+
+```sh
+npx philomatheia --agent claude-code --agent codex
+sh ./install.sh --agent cursor
+```
+
+```powershell
+pwsh -NoProfile -Command "& .\install.ps1 -Agent claude-code,codex"
+```
+
+| Name | Agent |
+|---|---|
+| `claude-code` | Claude Code |
+| `codex` | Codex CLI |
+| `cursor` | Cursor |
+| `gemini` | Gemini CLI |
+| `copilot` | GitHub Copilot / VS Code |
+| `opencode` | OpenCode |
+| `amp` | Amp |
+| `goose` | Goose |
+| `roo` | Roo Code |
+| `factory` | Factory droid |
+| `pi` | pi |
+| `openclaw` | OpenClaw |
+
+To see the status table without installing anything, use `--list` (or `-ListTargets` in PowerShell).
 
 ## With npx
 
-Node 18 or newer is the only requirement, and nothing is cloned:
+Node 18 or newer is the only requirement, and nothing is cloned or installed globally:
 
 ```sh
 npx philomatheia
-```
-
-The npm package carries the same runtime files and the same installers; the command only picks the right one for your platform. It accepts one flag surface everywhere, including on Windows:
-
-```sh
 npx philomatheia --list
+npx philomatheia --agent codex
 npx philomatheia --all
 npx philomatheia --dest-root "$HOME/.config/my-agent/skills"
 npx philomatheia --update
 npx philomatheia --dry-run
 ```
 
-Nothing is installed globally. To pin a version, name it: `npx philomatheia@0.2.0`.
+The npm package carries the same runtime files and the same installers; the command only picks the right one for your platform, and takes the same flags everywhere including Windows. To pin a version, name it: `npx philomatheia@0.3.0`.
 
-## Windows
+## From a clone
 
 ```powershell
 git clone https://github.com/Ch1nYu/philomatheia.git
@@ -66,38 +118,35 @@ Set-Location .\philomatheia
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-Preview the destinations with `-WhatIf`. Replace an existing installation with the checked-out version by adding `-Update`.
-
-## macOS and Linux
-
 ```sh
 git clone https://github.com/Ch1nYu/philomatheia.git
 cd philomatheia
 sh ./install.sh
 ```
 
-Preview the destinations with `--dry-run`. Replace an existing installation with the checked-out version by adding `--update`.
+Preview with `--dry-run` or `-WhatIf`. Replace an existing installation with `--update` or `-Update`.
 
 ## Unattended installs
 
-A session that cannot prompt — a pipe, a CI job, or `PHILOMATHEIA_NON_INTERACTIVE=1` — never guesses a destination. It prints the status table and exits with code 2 unless you name the targets:
+A session that cannot prompt — a pipe, a CI job, or `PHILOMATHEIA_NON_INTERACTIVE=1` — never guesses. It prints the status table and exits with code 2 unless you name what to install:
 
 ```sh
-sh ./install.sh --all            # every harness already present on this machine
+sh ./install.sh --all               # every agent found on this machine
+sh ./install.sh --agent claude-code
 sh ./install.sh --dest-root "$HOME/.claude/skills"
-npx philomatheia --all
 ```
 
 ```powershell
 pwsh -NoProfile -File .\install.ps1 -All
+pwsh -NoProfile -File .\install.ps1 -Agent claude-code
 pwsh -NoProfile -File .\install.ps1 -DestinationRoot "$HOME\.claude\skills"
 ```
 
-`--all` installs only into harnesses that already exist; it creates nothing for a harness that is absent, and fails when none is found.
+`--all` selects only agents whose configuration directory exists, creates nothing for an agent that is absent, and fails when none is found.
 
 ## Choosing the destination yourself
 
-Point the installer at any directory:
+For an agent this installer does not know, point it at any directory:
 
 ```sh
 sh ./install.sh --dest-root "$HOME/.config/my-agent/skills"
@@ -107,7 +156,7 @@ sh ./install.sh --dest-root "$HOME/.config/my-agent/skills"
 pwsh -NoProfile -File .\install.ps1 -DestinationRoot "$HOME\.config\my-agent\skills"
 ```
 
-Repeat `--dest-root` to install into several directories in one run. In PowerShell, pass a comma-separated list and invoke the script with `-Command` rather than `-File`, because `-File` does not split arrays:
+Repeat `--dest-root` for several directories in one run. In PowerShell, pass a comma-separated list and invoke the script with `-Command` rather than `-File`, because `-File` does not split arrays:
 
 ```powershell
 pwsh -NoProfile -Command "& .\install.ps1 -DestinationRoot '$HOME\.agents\skills','$HOME\.claude\skills'"
@@ -135,7 +184,7 @@ Nothing else is needed at runtime. The tests, package tooling, and repository do
 Tagged releases provide `philomatheia-vX.Y.Z.zip` and a matching `.sha256` on the [GitHub Releases page](https://github.com/Ch1nYu/philomatheia/releases). Verify the checksum, then extract the top-level `philomatheia` folder into your skills directory.
 
 ```sh
-sha256sum -c philomatheia-v0.2.0.zip.sha256
+sha256sum -c philomatheia-v0.3.0.zip.sha256
 ```
 
 ## Verify and use
@@ -143,16 +192,16 @@ sha256sum -c philomatheia-v0.2.0.zip.sha256
 Confirm the manifest landed:
 
 ```sh
-cat "$HOME/.claude/skills/philomatheia/SKILL.md" | head -5
+cat "$HOME/.agents/skills/philomatheia/SKILL.md" | head -5
 ```
 
-Most harnesses detect a new skill automatically. Restart the agent if it does not appear. Then open an empty folder for one learning project and ask for what you want to learn:
+Most agents detect a new skill automatically. Restart the agent if it does not appear. Then open an empty folder for one learning project and ask for what you want to learn:
 
 ```text
 Use the philomatheia skill. I want to learn statistics well enough to read machine-learning papers critically. Diagnose my current level, then propose the first useful route for my approval.
 ```
 
-Harnesses that support explicit invocation can call the skill by its name, `philomatheia`. It can also activate on its own when a request matches the learning-focused description in `SKILL.md`.
+Agents that support explicit invocation can call the skill by its name, `philomatheia`. It can also activate on its own when a request matches the learning-focused description in `SKILL.md`.
 
 ## Requirements
 

@@ -63,7 +63,7 @@ jobs:
           try { .\install.ps1 -DestinationRoot $rootA, $rootB } catch { $refused = $true }
           if (-not $refused) { throw "Installer replaced an existing installation without -Update" }
           .\install.ps1 -DestinationRoot $rootA, $rootB -Update
-      - name: Choose harnesses instead of defaulting to them
+      - name: Choose agents instead of defaulting to them
         shell: pwsh
         env:
           HOME: ${{ runner.temp }}\pshome
@@ -77,11 +77,11 @@ jobs:
           # A PowerShell script that returns normally leaves $LASTEXITCODE alone,
           # and the runner ends the step with exit $LASTEXITCODE.
           $global:LASTEXITCODE = 0
-          if (Test-Path (Join-Path $HOME '.claude\skills\philomatheia')) { throw "Installer wrote to a harness nobody selected" }
-          if (Test-Path (Join-Path $HOME '.agents')) { throw "Installer created a harness directory nobody selected" }
+          if (Test-Path (Join-Path $HOME '.claude\skills\philomatheia')) { throw "Installer wrote to an agent directory nobody selected" }
+          if (Test-Path (Join-Path $HOME '.agents')) { throw "Installer created an agent directory nobody selected" }
           .\install.ps1 -All
-          if (-not (Test-Path (Join-Path $HOME '.claude\skills\philomatheia\SKILL.md'))) { throw "-All skipped the detected harness" }
-          if (Test-Path (Join-Path $HOME '.agents')) { throw "-All created a directory for an absent harness" }
+          if (-not (Test-Path (Join-Path $HOME '.claude\skills\philomatheia\SKILL.md'))) { throw "-All skipped the agent that is present" }
+          if (Test-Path (Join-Path $HOME '.agents')) { throw "-All created a directory for an absent agent" }
 
   install-posix:
     name: POSIX installer on ${{ matrix.os }}
@@ -100,37 +100,57 @@ jobs:
           test ! -f "$RUNNER_TEMP/skills/philomatheia/README.md"
           test ! -f "$RUNNER_TEMP/skills/philomatheia/scripts/check_package.py"
           sh ./install.sh --dest-root "$RUNNER_TEMP/skills" --update
-      - name: Detect every harness skills directory
+      - name: Install for every agent found on the machine
         env:
           PHILOMATHEIA_NON_INTERACTIVE: "1"
         run: |
           fake="$RUNNER_TEMP/home"
-          mkdir -p "$fake/.agents" "$fake/.claude"
-          HOME="$fake" sh ./install.sh --list | grep -q "detected, not installed"
+          mkdir -p "$fake/.claude" "$fake/.codex" "$fake/.config/goose"
+          export XDG_CONFIG_HOME="$fake/.config"
+          HOME="$fake" sh ./install.sh --list | grep -qE "Claude Code +found, not installed"
           HOME="$fake" sh ./install.sh --all
-          test -f "$fake/.agents/skills/philomatheia/SKILL.md"
           test -f "$fake/.claude/skills/philomatheia/SKILL.md"
+          test -f "$fake/.agents/skills/philomatheia/SKILL.md"
+          test -f "$fake/.config/agents/skills/philomatheia/SKILL.md"
           test ! -f "$fake/.claude/skills/philomatheia/README.md"
-          HOME="$fake" sh ./install.sh --list | grep -q "installed"
+          HOME="$fake" sh ./install.sh --list | grep -qE "Claude Code +installed"
           if HOME="$fake" sh ./install.sh --all; then
             echo "Installer replaced an existing installation without --update" >&2
             exit 1
           fi
           HOME="$fake" sh ./install.sh --all --update
-      - name: Choose harnesses instead of defaulting to them
+      - name: Choose agents instead of defaulting to them
         env:
           PHILOMATHEIA_NON_INTERACTIVE: "1"
         run: |
           bare="$RUNNER_TEMP/barehome"
           mkdir -p "$bare/.claude"
+          export XDG_CONFIG_HOME="$bare/.config"
           if HOME="$bare" sh ./install.sh; then
             echo "Installer picked a destination without being told to" >&2
             exit 1
           fi
           test ! -e "$bare/.claude/skills/philomatheia"
           test ! -e "$bare/.agents"
-          if HOME="$RUNNER_TEMP/emptyhome" sh ./install.sh --all; then
-            echo "--all installed somewhere with no harness present" >&2
+          if HOME="$RUNNER_TEMP/emptyhome" XDG_CONFIG_HOME="$RUNNER_TEMP/emptyhome/.config" sh ./install.sh --all; then
+            echo "--all installed somewhere with no agent present" >&2
+            exit 1
+          fi
+      - name: Install by agent name, sharing one directory
+        env:
+          PHILOMATHEIA_NON_INTERACTIVE: "1"
+        run: |
+          named="$RUNNER_TEMP/namedhome"
+          mkdir -p "$named"
+          export XDG_CONFIG_HOME="$named/.config"
+          HOME="$named" sh ./install.sh --agent codex --agent cursor | tee "$RUNNER_TEMP/named.log"
+          test -f "$named/.agents/skills/philomatheia/SKILL.md"
+          grep -q "serves Codex CLI, Cursor" "$RUNNER_TEMP/named.log"
+          test "$(grep -c '^Installed philomatheia' "$RUNNER_TEMP/named.log")" = "1"
+          HOME="$named" sh ./install.sh --agent claude-code
+          test -f "$named/.claude/skills/philomatheia/SKILL.md"
+          if HOME="$named" sh ./install.sh --agent not-an-agent; then
+            echo "Installer accepted an unknown agent name" >&2
             exit 1
           fi
 

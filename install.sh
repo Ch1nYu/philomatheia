@@ -8,51 +8,61 @@ dry_run=0
 all=0
 list_only=0
 dest_roots=""
+selected_slugs=""
 interactive_selection=0
 newline='
 '
 
-# Harnesses this installer can recognise, as "name|marker directory|skills
-# directory". Recognition never implies selection: a destination is used only
-# when it is chosen explicitly.
-known_harnesses="Codex|${HOME}/.agents|${HOME}/.agents/skills
-Claude Code|${HOME}/.claude|${HOME}/.claude/skills"
+config_home=${XDG_CONFIG_HOME:-$HOME/.config}
+# Three directories cover the ecosystem. `.agents/skills` is the cross-agent
+# convention most tools read; Claude Code and the XDG-style agents share the
+# other two. Each agent below is mapped to the directory its own documentation
+# names, so selecting several agents usually resolves to a single install.
+cross_agent_dir="$HOME/.agents/skills"
+claude_dir="$HOME/.claude/skills"
+config_agent_dir="$config_home/agents/skills"
+
+# slug|display name|directory whose presence means the agent is installed|skills directory
+known_agents="claude-code|Claude Code|$HOME/.claude|$claude_dir
+codex|Codex CLI|$HOME/.codex|$cross_agent_dir
+cursor|Cursor|$HOME/.cursor|$cross_agent_dir
+gemini|Gemini CLI|$HOME/.gemini|$cross_agent_dir
+copilot|GitHub Copilot / VS Code|$HOME/.copilot|$cross_agent_dir
+opencode|OpenCode|$config_home/opencode|$cross_agent_dir
+amp|Amp|$config_home/amp|$config_agent_dir
+goose|Goose|$config_home/goose|$config_agent_dir
+roo|Roo Code|$HOME/.roo|$cross_agent_dir
+factory|Factory droid|$HOME/.factory|$cross_agent_dir
+pi|pi|$HOME/.pi|$cross_agent_dir
+openclaw|OpenClaw|$HOME/.openclaw|$cross_agent_dir"
 
 usage() {
-    printf '%s\n' "Usage: ./install.sh [--dest-root PATH]... [--all] [--list] [--update] [--dry-run]"
+    printf '%s\n' "Usage: ./install.sh [--agent NAME]... [--dest-root PATH]... [--all] [--list] [--update] [--dry-run]"
     printf '%s\n' ""
-    printf '%s\n' "Installs the runtime skill files into the agent skills directories you choose."
-    printf '%s\n' "No destination is used by default. With no --dest-root and no --all, the"
-    printf '%s\n' "installer lists the known harnesses with their status and asks which to use."
+    printf '%s\n' "Installs the runtime skill files for the agents you choose. No agent is"
+    printf '%s\n' "chosen by default: with no --agent, --dest-root, or --all, the installer"
+    printf '%s\n' "lists the agents it knows about with their status and asks which to use."
     printf '%s\n' ""
+    printf '%s\n' "  --agent NAME      install for this agent; repeat for several"
     printf '%s\n' "  --dest-root PATH  install into PATH; repeat for several directories"
-    printf '%s\n' "  --all             install into every known harness directory that exists"
-    printf '%s\n' "  --list            print the harness status table and exit"
+    printf '%s\n' "  --all             install for every agent found on this machine"
+    printf '%s\n' "  --list            print the agent status table and exit"
     printf '%s\n' "  --update          replace an existing installation"
     printf '%s\n' "  --dry-run         print what would be installed and exit"
     printf '%s\n' ""
-    printf '%s\n' "Known harnesses:"
-    printf '%s\n' "  \$HOME/.agents/skills   Codex"
-    printf '%s\n' "  \$HOME/.claude/skills   Claude Code"
-    printf '%s\n' "PHILOMATHEIA_DEST_ROOT sets one destination when no flag is given."
-}
-
-add_root() {
-    case "$newline$dest_roots" in
-        *"$newline$1$newline"*) return 0 ;;
-    esac
-    dest_roots="$dest_roots$1$newline"
-}
-
-harness_status() {
-    # harness_status MARKER SKILLS_ROOT
-    if [ -e "$2/$skill_name" ]; then
-        printf 'installed'
-    elif [ -d "$1" ]; then
-        printf 'detected, not installed'
-    else
-        printf 'harness not found'
-    fi
+    printf '%s\n' "Agent names:"
+    old_ifs=$IFS
+    IFS=$newline
+    for line in $known_agents; do
+        slug=${line%%|*}
+        rest=${line#*|}
+        name=${rest%%|*}
+        printf '  %s %s\n' "$(pad_right "$slug" 12)" "$name"
+    done
+    IFS=$old_ifs
+    printf '%s\n' ""
+    printf '%s\n' "Several agents usually share one directory, which is written once."
+    printf '%s\n' "PHILOMATHEIA_DEST_ROOT sets one destination and skips the prompt."
 }
 
 pad_right() {
@@ -64,43 +74,72 @@ pad_right() {
     printf '%s' "$padded"
 }
 
-print_target_table() {
-    # print_target_table [numbered]
-    numbered=${1:-0}
-    name_width=0
-    root_width=0
+field() {
+    # field LINE INDEX  (1-based, "|" separated)
+    value=$1
+    index=$2
+    while [ "$index" -gt 1 ]; do
+        value=${value#*|}
+        index=$((index - 1))
+    done
+    printf '%s' "${value%%|*}"
+}
+
+agent_line() {
+    # agent_line SLUG -> the registry line, empty when unknown
     old_ifs=$IFS
     IFS=$newline
-    for line in $known_harnesses; do
-        name=${line%%|*}
-        rest=${line#*|}
-        root=${rest#*|}
+    for line in $known_agents; do
+        if [ "${line%%|*}" = "$1" ]; then
+            printf '%s' "$line"
+            break
+        fi
+    done
+    IFS=$old_ifs
+}
+
+agent_status() {
+    # agent_status MARKER SKILLS_DIR
+    if [ -e "$2/$skill_name" ]; then
+        printf 'installed'
+    elif [ -d "$1" ]; then
+        printf 'found, not installed'
+    else
+        printf 'not found'
+    fi
+}
+
+print_agent_table() {
+    # print_agent_table [numbered]
+    numbered=${1:-0}
+    name_width=0
+    old_ifs=$IFS
+    IFS=$newline
+    for line in $known_agents; do
+        name=$(field "$line" 2)
         [ ${#name} -le "$name_width" ] || name_width=${#name}
-        [ ${#root} -le "$root_width" ] || root_width=${#root}
     done
     index=0
-    for line in $known_harnesses; do
+    for line in $known_agents; do
         index=$((index + 1))
-        name=${line%%|*}
-        rest=${line#*|}
-        marker=${rest%%|*}
-        root=${rest#*|}
+        name=$(field "$line" 2)
+        marker=$(field "$line" 3)
+        target=$(field "$line" 4)
         if [ "$numbered" -eq 1 ]; then
             printf '%3d) ' "$index"
         else
             printf '  '
         fi
-        printf '%s  %s  %s\n' "$(pad_right "$name" "$name_width")" \
-            "$(pad_right "$root" "$root_width")" "$(harness_status "$marker" "$root")"
+        printf '%s  %s\n' "$(pad_right "$name" "$name_width")" "$(agent_status "$marker" "$target")"
     done
     IFS=$old_ifs
 }
 
-harness_count() {
+agent_count() {
     old_ifs=$IFS
     IFS=$newline
     count=0
-    for line in $known_harnesses; do
+    for line in $known_agents; do
         if [ -n "$line" ]; then
             count=$((count + 1))
         fi
@@ -109,20 +148,64 @@ harness_count() {
     printf '%s' "$count"
 }
 
-harness_root_at() {
-    # harness_root_at INDEX
+agent_at() {
+    # agent_at INDEX -> the registry line
     old_ifs=$IFS
     IFS=$newline
     index=0
-    for line in $known_harnesses; do
+    for line in $known_agents; do
         index=$((index + 1))
         if [ "$index" -eq "$1" ]; then
-            rest=${line#*|}
-            printf '%s' "${rest#*|}"
+            printf '%s' "$line"
             break
         fi
     done
     IFS=$old_ifs
+}
+
+add_root() {
+    case "$newline$dest_roots" in
+        *"$newline$1$newline"*) return 0 ;;
+    esac
+    dest_roots="$dest_roots$1$newline"
+}
+
+select_agent() {
+    # select_agent SLUG
+    case "$newline$selected_slugs" in
+        *"$newline$1$newline"*) ;;
+        *) selected_slugs="$selected_slugs$1$newline" ;;
+    esac
+    line=$(agent_line "$1")
+    add_root "$(field "$line" 4)"
+}
+
+agents_for_dest() {
+    # agents_for_dest DIRECTORY -> "Name, Name" for the selected agents it serves
+    names=""
+    old_ifs=$IFS
+    IFS=$newline
+    for slug in $selected_slugs; do
+        [ -n "$slug" ] || continue
+        line=$(agent_line "$slug")
+        [ "$(field "$line" 4)" = "$1" ] || continue
+        if [ -z "$names" ]; then
+            names=$(field "$line" 2)
+        else
+            names="$names, $(field "$line" 2)"
+        fi
+    done
+    IFS=$old_ifs
+    printf '%s' "$names"
+}
+
+report_destination() {
+    # report_destination VERB DIRECTORY
+    printf '%s %s at %s\n' "$1" "$skill_name" "$2/$skill_name"
+    served=$(agents_for_dest "$2")
+    if [ -n "$served" ]; then
+        printf '  serves %s\n' "$served"
+    fi
 }
 
 can_prompt() {
@@ -139,12 +222,15 @@ ask() {
 }
 
 select_destinations() {
-    count=$(harness_count)
-    custom_index=$((count + 1))
+    count=$(agent_count)
+    project_index=$((count + 1))
+    custom_index=$((count + 2))
 
     {
         printf 'Select where to install %s. Nothing is selected by default.\n\n' "$skill_name"
-        print_target_table 1
+        printf '     AGENT%sSTATUS\n' '                      '
+        print_agent_table 1
+        printf '\n%3d) %s\n' "$project_index" "This project only (./.agents/skills)"
         printf '%3d) %s\n\n' "$custom_index" "Another directory (enter the path yourself)"
     } >&2
 
@@ -154,7 +240,7 @@ select_destinations() {
 
         selection=$(printf '%s' "$reply" | tr ',' ' ')
         valid=1
-        chosen=""
+        pending=""
         set -f
         for token in $selection; do
             case "$token" in
@@ -176,22 +262,28 @@ select_destinations() {
                     valid=0
                     break
                 fi
-                chosen="$chosen$reply$newline"
+                pending="$pending=$reply$newline"
+            elif [ "$token" -eq "$project_index" ]; then
+                pending="$pending=$PWD/.agents/skills$newline"
             else
-                chosen="$chosen$(harness_root_at "$token")$newline"
+                pending="$pending$(field "$(agent_at "$token")" 1)$newline"
             fi
         done
         set +f
         [ "$valid" -eq 1 ] || continue
-        if [ -z "$chosen" ]; then
+        if [ -z "$pending" ]; then
             printf 'Nothing selected.\n' >&2
             continue
         fi
 
         old_ifs=$IFS
         IFS=$newline
-        for root in $chosen; do
-            [ -n "$root" ] && add_root "$root"
+        for entry in $pending; do
+            [ -n "$entry" ] || continue
+            case "$entry" in
+                "="*) add_root "${entry#=}" ;;
+                *) select_agent "$entry" ;;
+            esac
         done
         IFS=$old_ifs
         return 0
@@ -211,6 +303,16 @@ confirm_replacement() {
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
+        --agent)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            if [ -z "$(agent_line "$2")" ]; then
+                printf 'Unknown agent: %s\n' "$2" >&2
+                usage >&2
+                exit 2
+            fi
+            select_agent "$2"
+            shift 2
+            ;;
         --dest-root)
             [ "$#" -ge 2 ] || { usage >&2; exit 2; }
             add_root "$2"
@@ -256,29 +358,30 @@ for item in agents assets references scripts/init_project.py scripts/validate_st
 done
 
 if [ "$list_only" -eq 1 ]; then
-    print_target_table 0
+    print_agent_table 0
     exit 0
 fi
 
+if [ "$all" -eq 1 ]; then
+    old_ifs=$IFS
+    IFS=$newline
+    for line in $known_agents; do
+        # Presence of the agent, not of an earlier install: a directory that
+        # several agents read must not imply that all of them are here.
+        if [ -d "$(field "$line" 3)" ]; then
+            select_agent "$(field "$line" 1)"
+        fi
+    done
+    IFS=$old_ifs
+    [ -n "$dest_roots" ] || {
+        printf 'No known agent was found on this machine, so --all selected nothing.\n' >&2
+        printf 'Pass --agent NAME or --dest-root PATH instead.\n' >&2
+        exit 1
+    }
+fi
+
 if [ -z "$dest_roots" ]; then
-    if [ "$all" -eq 1 ]; then
-        old_ifs=$IFS
-        IFS=$newline
-        for line in $known_harnesses; do
-            rest=${line#*|}
-            marker=${rest%%|*}
-            root=${rest#*|}
-            if [ -d "$marker" ] || [ -e "$root/$skill_name" ]; then
-                add_root "$root"
-            fi
-        done
-        IFS=$old_ifs
-        [ -n "$dest_roots" ] || {
-            printf 'No known harness directory exists, so --all selected nothing.\n' >&2
-            printf 'Pass --dest-root with the skills directory to use.\n' >&2
-            exit 1
-        }
-    elif [ -n "${PHILOMATHEIA_DEST_ROOT:-}" ]; then
+    if [ -n "${PHILOMATHEIA_DEST_ROOT:-}" ]; then
         add_root "$PHILOMATHEIA_DEST_ROOT"
     elif can_prompt; then
         interactive_selection=1
@@ -289,10 +392,10 @@ if [ -z "$dest_roots" ]; then
         fi
     else
         printf 'No destination was selected, and this session cannot prompt for one.\n' >&2
-        printf 'Known harness directories:\n' >&2
-        print_target_table 0 >&2
-        printf 'Choose a destination with --dest-root, install into every detected harness\n' >&2
-        printf 'with --all, or run the installer interactively.\n' >&2
+        printf 'Agents on this machine:\n' >&2
+        print_agent_table 0 >&2
+        printf 'Choose with --agent NAME, --dest-root PATH, or --all, or run the\n' >&2
+        printf 'installer interactively.\n' >&2
         exit 2
     fi
 fi
@@ -323,9 +426,9 @@ if [ "$dry_run" -eq 1 ]; then
     for destination_root in $dest_roots; do
         [ -n "$destination_root" ] || continue
         if [ -e "$destination_root/$skill_name" ]; then
-            printf 'Update %s at %s\n' "$skill_name" "$destination_root/$skill_name"
+            report_destination "Update" "$destination_root"
         else
-            printf 'Install %s at %s\n' "$skill_name" "$destination_root/$skill_name"
+            report_destination "Install" "$destination_root"
         fi
     done
     IFS=$old_ifs
@@ -386,7 +489,7 @@ install_one() {
     fi
 
     trap - EXIT HUP INT TERM
-    printf '%s %s at %s\n' "$past_action" "$skill_name" "$destination_path"
+    report_destination "$past_action" "$destination_root"
 }
 
 old_ifs=$IFS
@@ -399,5 +502,5 @@ for destination_root in $dest_roots; do
 done
 IFS=$old_ifs
 
-printf '%s\n' 'Most harnesses detect a new skill automatically. Restart the agent if it does not appear.'
+printf '%s\n' 'Most agents detect a new skill automatically. Restart the agent if it does not appear.'
 printf '%s\n' 'Then ask it to teach or map a subject, or invoke the skill by name: philomatheia'

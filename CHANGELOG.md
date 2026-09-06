@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-06
+
+### Added
+
+- The installer now picks from twelve agents by name — Claude Code, Codex CLI, Cursor, Gemini CLI, GitHub Copilot / VS Code, OpenCode, Amp, Goose, Roo Code, Factory droid, pi, and OpenClaw — instead of listing two directories and asking for a path. Each row shows whether that agent is on this machine and whether the skill is already where it reads. `--agent NAME` / `-Agent NAME` selects without the prompt, and the menu gained an entry for the current project (`./.agents/skills`).
+- Agents that share a skills directory resolve to one install, and the result says which agents that directory serves. Every mapping comes from the agent's own documentation: `~/.agents/skills` for the nine that read the cross-agent convention, `~/.claude/skills` for Claude Code, `$XDG_CONFIG_HOME/agents/skills` for Amp and Goose.
+- A test parses the agent table out of both installers and fails when they disagree, and checks that every agent name reaches the npx help and `INSTALL.md`.
+
+### Changed
+
+- `--all` / `-All` now selects agents whose configuration directory exists. It no longer treats "the skill is already in a directory this agent would read" as evidence that the agent is installed, which previously credited absent agents.
+- Status wording follows the agent rather than the directory: `installed`, `found, not installed`, `not found`.
+
 ## [0.2.0] - 2026-09-06
 
 Breaking for unattended callers: running an installer with no arguments no longer installs anything. A script that relied on the old detect-and-install default must now pass `--all` / `-All`, or name a destination.
@@ -45,6 +58,7 @@ Breaking for unattended callers: running an installer with no arguments no longe
 - English and Traditional Chinese public documentation, evaluation protocol, security policy, acknowledgments, and MIT license.
 - Cross-platform GitHub Actions validation, unit tests, versioned release archives, and SHA-256 checksums.
 
-[Unreleased]: https://github.com/Ch1nYu/philomatheia/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Ch1nYu/philomatheia/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Ch1nYu/philomatheia/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Ch1nYu/philomatheia/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Ch1nYu/philomatheia/releases/tag/v0.1.0

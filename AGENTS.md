@@ -74,8 +74,10 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - Major route payload 改變後必須更新 revision、重新取得使用者同意並重算 `approved_fingerprint`。
 - Release workflow 只在 `v*` tag 觸發，且 tag 必須等於 `v$(cat VERSION)`。
 - Runtime installer 的檔案集合刻意小於 repository；變更 allowlist 時必須同時測試「需要的檔案存在」與「repo-only 檔案未進入安裝結果」。
-- Installer 不會替使用者選 harness。未指定目標時它列出已知 harness 與狀態（`installed` / `detected, not installed` / `harness not found`）並詢問；直接 Enter 等於取消。無法互動的 session（pipe、CI、`PHILOMATHEIA_NON_INTERACTIVE=1`）不猜目標，會印出狀態表並以 exit code 2 結束，必須改用 `--dest-root` / `-DestinationRoot` 或 `--all` / `-All`。
-- `--all` / `-All` 只選已存在的 harness，不會為不存在的 harness 建立目錄；一個都沒有時視為錯誤。
+- Installer 不會替使用者選 agent。未指定時它列出十二個已知 agent 與狀態（`installed` / `found, not installed` / `not found`）並詢問；直接 Enter 等於取消。無法互動的 session（pipe、CI、`PHILOMATHEIA_NON_INTERACTIVE=1`）不猜目標，會印出狀態表並以 exit code 2 結束，必須改用 `--agent` / `-Agent`、`--dest-root` / `-DestinationRoot` 或 `--all` / `-All`。
+- Agent 與目錄是多對一：九個 agent 共用 `~/.agents/skills`，Claude Code 用 `~/.claude/skills`，Amp 與 Goose 用 `$XDG_CONFIG_HOME/agents/skills`。選多個 agent 只會寫一次，輸出的 `serves ...` 說明該目錄服務誰。
+- 每個 agent 的目錄必須來自該 agent 的官方文件，不可推測。新增 agent 時要同步 `install.sh`、`install.ps1`、`bin/philomatheia.js` 的說明與 `INSTALL.md`；測試會比對兩支 installer 的表格是否一致。
+- `--all` / `-All` 依 agent 的設定目錄是否存在來判斷，不看 skill 是否已安裝；共用目錄已有安裝不代表所有讀它的 agent 都在這台機器上。
 - 任一目標已存在且未加 `--update` 時，非互動流程在寫入前就整批中止；互動選擇時改為逐一詢問是否替換，拒絕即整批取消。
 - PowerShell 用 `-File` 執行時不會拆解陣列參數；要一次指定多個 `-DestinationRoot` 必須改用 `-Command`（`bin/philomatheia.js` 已採用 `-Command`）。
 - `pwsh -Command` 回傳的是自己的成敗，不是腳本的 exit code；shim 靠附加 `; exit $LASTEXITCODE` 才能把 2 傳出來。
@@ -84,11 +86,11 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 
 ## Progress
 
-- Current version: `0.2.0` alpha
+- Current version: `0.3.0` alpha
 - Repository 自 `v0.1.0` 起已是 public；`v0.1.0` tag 已推上 origin。
 - Package、state tools、Windows/POSIX installers 與跨平台 CI 已通過。
-- Installer 改為互動選擇安裝目標，預設不安裝到任何 harness；`--list` / `--all` 供非互動使用。
-- `npx philomatheia` 進入點已完成並通過端到端測試，但**尚未 publish 到 npm registry**。`0.1.0` 這個號碼已對應公開的 GitHub release，所以第一次 npm publish 走 `0.2.0`。
-- `v0.2.0` 尚未 tag；`VERSION`、`package.json`、`CHANGELOG.md`、`CITATION.cff` 都已對齊 `0.2.0`。
+- Installer 改為依 agent 名稱選擇（十二個已知 agent），預設不安裝給任何 agent；`--agent` / `--list` / `--all` 供非互動使用。
+- `npx philomatheia` 已發佈到 npm registry（`0.2.0`），並經 registry 端到端驗證。
+- `v0.2.0` 已 tag 並發佈 GitHub Release 與 npm。`0.3.0` 已在四個檔案對齊，尚未 tag、尚未 publish。
 - Release archive 只含 runtime scripts；`check_package.py` 與 `build_release.py` 留在 clone。
 - Longitudinal learning-outcome evidence: 尚未建立，見 `EVALUATION.md` 的驗證協定

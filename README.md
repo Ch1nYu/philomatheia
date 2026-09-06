@@ -10,7 +10,7 @@
 
 Philomatheia turns a learning goal into a visible knowledge map, teaches through small adaptive loops, records what the learner can actually demonstrate, and resumes from an exact checkpoint across sessions. It runs on any agent harness that loads skills from a directory, including Codex and Claude Code.
 
-> Project status: `v0.2.0` alpha. The state model, validators, and installers are tested. Long-term learning-outcome improvements have not yet been established by a controlled or longitudinal study.
+> Project status: `v0.3.0` alpha. The state model, validators, and installers are tested. Long-term learning-outcome improvements have not yet been established by a controlled or longitudinal study.
 
 ## Why use it
 
@@ -50,25 +50,39 @@ cd philomatheia
 sh ./install.sh
 ```
 
-The installer copies only the runtime files, and installs nothing until you choose a destination. It lists the harnesses it knows about with their current status and asks which ones to use:
+The installer copies only the runtime files, and installs nothing until you choose. It lists the agents it knows about, marks which ones are on your machine, and asks:
 
 ```text
 Select where to install philomatheia. Nothing is selected by default.
 
-  1) Codex        /home/you/.agents/skills  installed
-  2) Claude Code  /home/you/.claude/skills  detected, not installed
-  3) Another directory (enter the path yourself)
+     AGENT                     STATUS
+  1) Claude Code               installed
+  2) Codex CLI                 found, not installed
+  3) Cursor                    found, not installed
+  4) Gemini CLI                not found
+  5) GitHub Copilot / VS Code  not found
+  6) OpenCode                  found, not installed
+  7) Amp                       not found
+  8) Goose                     not found
+  9) Roo Code                  not found
+ 10) Factory droid             not found
+ 11) pi                        not found
+ 12) OpenClaw                  not found
+
+ 13) This project only (./.agents/skills)
+ 14) Another directory (enter the path yourself)
+
+Numbers separated by commas (for example 1,2), or Enter to cancel: 2,3
+
+Installed philomatheia at /home/you/.agents/skills/philomatheia
+  serves Codex CLI, Cursor
 ```
 
-| Harness | Directory |
-|---|---|
-| Codex | `$HOME/.agents/skills` |
-| Claude Code | `$HOME/.claude/skills` |
-| Anything else | Choose the last entry, or pass `--dest-root` / `-DestinationRoot` |
+Most agents read the same cross-agent directory, so choosing several of them writes once. Enter selects nothing and leaves the machine untouched.
 
-Pressing Enter selects nothing and leaves the machine untouched. `--list` or `-ListTargets` prints the same status table without installing, `--all` or `-All` selects every harness already present, and `--dry-run` or `-WhatIf` previews the chosen destinations. The installer refuses to replace an existing installation unless `--update` or `-Update` is supplied, or you confirm the replacement at the prompt.
+Skip the prompt with `--agent claude-code`, repeated as needed. `--list` prints the status table without installing, `--all` selects every agent found on this machine, `--dry-run` previews, and `--update` replaces an existing installation. `npx philomatheia` takes the same flags on every platform, Windows included; the bundled `install.ps1` uses `-Agent`, `-ListTargets`, `-All`, `-WhatIf`, `-Update`.
 
-`npx philomatheia` takes the same flags on every platform: `npx philomatheia --list`, `--all`, `--update`, `--dry-run`, `--dest-root PATH`. See [INSTALL.md](INSTALL.md) for manual installation, release archives, and other harnesses.
+See [INSTALL.md](INSTALL.md) for the full agent list with directories, manual installation, release archives, and agents this installer does not know about.
 
 ### Start a learning project
 
