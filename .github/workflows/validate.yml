@@ -130,3 +130,40 @@ jobs:
             echo "--all installed somewhere with no harness present" >&2
             exit 1
           fi
+
+  # Windows coverage for the npx entry point comes from NpmEntryPointTests in
+  # the test job, which handles Windows paths without a shell in the way.
+  install-npx:
+    name: npx entry point on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install from a packed tarball
+        shell: bash
+        env:
+          PHILOMATHEIA_NON_INTERACTIVE: "1"
+        run: |
+          node --version
+          npm pack --pack-destination "$RUNNER_TEMP"
+          tarball="$RUNNER_TEMP/philomatheia-$(cat VERSION).tgz"
+          skills="$RUNNER_TEMP/npx-skills"
+          npx --yes "$tarball" --list
+          npx --yes "$tarball" --dest-root "$skills"
+          test -f "$skills/philomatheia/SKILL.md"
+          test -f "$skills/philomatheia/scripts/validate_state.py"
+          test ! -e "$skills/philomatheia/README.md"
+          test ! -e "$skills/philomatheia/install.sh"
+          test ! -e "$skills/philomatheia/package.json"
+          if npx --yes "$tarball" --dest-root "$skills"; then
+            echo "npx entry point replaced an existing installation without --update" >&2
+            exit 1
+          fi
+          npx --yes "$tarball" --dest-root "$skills" --update
+          if npx --yes "$tarball"; then
+            echo "npx entry point picked a destination without being told to" >&2
+            exit 1
+          fi

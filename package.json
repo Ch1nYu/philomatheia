@@ -1,0 +1,40 @@
+{
+  "name": "philomatheia",
+  "version": "0.1.0",
+  "description": "Persistent, evidence-based learning Agent Skill with goal-specific knowledge maps and exact cross-session checkpoints.",
+  "keywords": [
+    "agent-skills",
+    "adaptive-learning",
+    "claude-code",
+    "codex",
+    "education",
+    "knowledge-graph",
+    "mastery-learning"
+  ],
+  "homepage": "https://github.com/Ch1nYu/philomatheia#readme",
+  "bugs": {
+    "url": "https://github.com/Ch1nYu/philomatheia/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ch1nYu/philomatheia.git"
+  },
+  "license": "MIT",
+  "bin": {
+    "philomatheia": "bin/philomatheia.js"
+  },
+  "files": [
+    "bin/philomatheia.js",
+    "install.ps1",
+    "install.sh",
+    "SKILL.md",
+    "agents/",
+    "assets/",
+    "references/",
+    "scripts/init_project.py",
+    "scripts/validate_state.py"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

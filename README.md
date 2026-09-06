@@ -28,7 +28,13 @@ Philomatheia is useful when the desired result is durable ability rather than a 
 
 ### Install
 
-Clone the repository and run the installer for your platform:
+With Node 18 or newer, no clone is needed:
+
+```sh
+npx philomatheia
+```
+
+Or clone the repository and run the installer for your platform:
 
 ```powershell
 # Windows
@@ -60,7 +66,9 @@ Select where to install philomatheia. Nothing is selected by default.
 | Claude Code | `$HOME/.claude/skills` |
 | Anything else | Choose the last entry, or pass `--dest-root` / `-DestinationRoot` |
 
-Pressing Enter selects nothing and leaves the machine untouched. `--list` or `-ListTargets` prints the same status table without installing, `--all` or `-All` selects every harness already present, and `--dry-run` or `-WhatIf` previews the chosen destinations. The installer refuses to replace an existing installation unless `--update` or `-Update` is supplied, or you confirm the replacement at the prompt. See [INSTALL.md](INSTALL.md) for manual installation, release archives, and other harnesses.
+Pressing Enter selects nothing and leaves the machine untouched. `--list` or `-ListTargets` prints the same status table without installing, `--all` or `-All` selects every harness already present, and `--dry-run` or `-WhatIf` previews the chosen destinations. The installer refuses to replace an existing installation unless `--update` or `-Update` is supplied, or you confirm the replacement at the prompt.
+
+`npx philomatheia` takes the same flags on every platform: `npx philomatheia --list`, `--all`, `--update`, `--dry-run`, `--dest-root PATH`. See [INSTALL.md](INSTALL.md) for manual installation, release archives, and other harnesses.
 
 ### Start a learning project
 
@@ -132,6 +140,7 @@ The repository contains deterministic checks for these state invariants and repr
 - Python 3.10 or newer for project initialization and state validation
 - No third-party Python packages for the core scripts
 - PowerShell 7 for the Windows installer, or a POSIX shell on macOS/Linux
+- Node.js 18 or newer only if you install with `npx`
 
 External research tools may still be needed when a learning project depends on current or specialized sources.
 

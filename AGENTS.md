@@ -32,6 +32,8 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - Windows install/update: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 [-Update]`
 - POSIX install preview: `sh ./install.sh --dry-run`
 - POSIX install/update: `sh ./install.sh [--update]`
+- npx entry point: `node bin/philomatheia.js --list`
+- npm package contents: `npm pack --dry-run --json`
 - Package check: `python scripts/check_package.py`
 - Test: `python -m unittest discover -s tests -v`
 - Compile check: `python -m py_compile scripts/init_project.py scripts/validate_state.py scripts/check_package.py scripts/build_release.py`
@@ -51,6 +53,8 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - `scripts/validate_state.py`: 驗證 machine-checkable state invariants
 - `scripts/check_package.py`: 驗證公開套件結構與連結
 - `scripts/build_release.py`: 產生 `dist/` release zip 與 SHA-256
+- `bin/philomatheia.js`: `npx philomatheia` 進入點，只做平台判斷與參數轉換
+- `package.json`: npm 發佈設定；`files` 決定使用者拿到什麼
 - `tests/`: package、state tooling 與 installer 目標選擇的 unit tests
 - `.github/workflows/`: 跨平台 validate 與 tag release automation
 
@@ -59,8 +63,9 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - 修改學習契約或 state schema 時，同步更新相關 reference、template、validator 與 tests。
 - 英文與繁中 README 的功能、安裝方式與限制應保持一致。
 - Installer 只部署 runtime allowlist；不可把 README、tests、GitHub metadata 或 package tooling 安裝到個人 Skill 目錄。
-- `VERSION`、`CHANGELOG.md` 與 release tag 必須一致；tag 格式為 `vX.Y.Z`。
-- `dist/` 是可重建產物，不提交 Git。
+- `VERSION`、`package.json` 的 `version`、`CHANGELOG.md` 與 release tag 必須一致；tag 格式為 `vX.Y.Z`。
+- `dist/`、`node_modules/`、`*.tgz` 是可重建產物，不提交 Git。
+- `bin/philomatheia.js` 不重寫安裝邏輯；選單、偵測與複製只存在 `install.sh` 與 `install.ps1`。
 
 ## Known Pitfalls
 
@@ -72,7 +77,10 @@ Philomatheia 是一個獨立的 Agent Skill，為任意主題建立可持續、�
 - Installer 不會替使用者選 harness。未指定目標時它列出已知 harness 與狀態（`installed` / `detected, not installed` / `harness not found`）並詢問；直接 Enter 等於取消。無法互動的 session（pipe、CI、`PHILOMATHEIA_NON_INTERACTIVE=1`）不猜目標，會印出狀態表並以 exit code 2 結束，必須改用 `--dest-root` / `-DestinationRoot` 或 `--all` / `-All`。
 - `--all` / `-All` 只選已存在的 harness，不會為不存在的 harness 建立目錄；一個都沒有時視為錯誤。
 - 任一目標已存在且未加 `--update` 時，非互動流程在寫入前就整批中止；互動選擇時改為逐一詢問是否替換，拒絕即整批取消。
-- PowerShell 用 `-File` 執行時不會拆解陣列參數；要一次指定多個 `-DestinationRoot` 必須改用 `-Command`。
+- PowerShell 用 `-File` 執行時不會拆解陣列參數；要一次指定多個 `-DestinationRoot` 必須改用 `-Command`（`bin/philomatheia.js` 已採用 `-Command`）。
+- `pwsh -Command` 回傳的是自己的成敗，不是腳本的 exit code；shim 靠附加 `; exit $LASTEXITCODE` 才能把 2 傳出來。
+- npx 在所有平台只提供 POSIX 風格參數。`install.ps1` 依 `PHILOMATHEIA_CLI=npx` 決定錯誤訊息要說 `--update` 還是 `-Update`；新增提到參數名稱的訊息時要一併處理。
+- npm 的 `files` 是使用者實際拿到的檔案集合，和 `build_release.py` 的清單各自獨立；改動任一邊都要跑 `npm pack --dry-run` 與 package check。
 
 ## Progress
 

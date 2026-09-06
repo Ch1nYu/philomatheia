@@ -38,6 +38,26 @@ Enter selects nothing and exits without touching anything. Answer with the numbe
 
 To see the same table without installing anything, use `--list` or `-ListTargets`.
 
+## With npx
+
+Node 18 or newer is the only requirement, and nothing is cloned:
+
+```sh
+npx philomatheia
+```
+
+The npm package carries the same runtime files and the same installers; the command only picks the right one for your platform. It accepts one flag surface everywhere, including on Windows:
+
+```sh
+npx philomatheia --list
+npx philomatheia --all
+npx philomatheia --dest-root "$HOME/.config/my-agent/skills"
+npx philomatheia --update
+npx philomatheia --dry-run
+```
+
+Nothing is installed globally. To pin a version, name it: `npx philomatheia@0.1.0`.
+
 ## Windows
 
 ```powershell
@@ -65,6 +85,7 @@ A session that cannot prompt — a pipe, a CI job, or `PHILOMATHEIA_NON_INTERACT
 ```sh
 sh ./install.sh --all            # every harness already present on this machine
 sh ./install.sh --dest-root "$HOME/.claude/skills"
+npx philomatheia --all
 ```
 
 ```powershell
@@ -138,3 +159,4 @@ Harnesses that support explicit invocation can call the skill by its name, `phil
 - Python 3.10 or newer for `init_project.py` and `validate_state.py`
 - No third-party Python packages
 - PowerShell 7 for the Windows installer, or any POSIX shell elsewhere
+- Node.js 18 or newer only for the `npx` entry point; the bundled installers do not need it

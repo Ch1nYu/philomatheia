@@ -18,6 +18,15 @@ $runtimeScripts = @('init_project.py', 'validate_state.py')
 # Harnesses this installer can recognise. Marker is the directory the harness
 # owns; Root is the personal skills directory inside it. Recognition never
 # implies selection: a destination is used only when it is chosen explicitly.
+# The npx entry point exposes the POSIX flag names on every platform, so
+# guidance has to name the flags the caller actually typed.
+$flagNames = if ($env:PHILOMATHEIA_CLI -eq 'npx') {
+    @{ Destination = '--dest-root'; All = '--all'; Update = '--update' }
+}
+else {
+    @{ Destination = '-DestinationRoot'; All = '-All'; Update = '-Update' }
+}
+
 $knownHarnesses = @(
     [pscustomobject]@{
         Name   = 'Codex'
@@ -169,7 +178,7 @@ elseif ($env:PHILOMATHEIA_DEST_ROOT) {
 elseif ($All) {
     $roots = @(Get-HarnessTarget | Where-Object { $_.Present -or $_.Installed } | Select-Object -ExpandProperty Root)
     if ($roots.Count -eq 0) {
-        throw 'No known harness directory exists, so -All selected nothing. Pass -DestinationRoot with the skills directory to use.'
+        throw "No known harness directory exists, so $($flagNames.All) selected nothing. Pass $($flagNames.Destination) with the skills directory to use."
     }
 }
 elseif (Test-Interactive) {
@@ -184,7 +193,7 @@ else {
     Write-Host 'No destination was selected, and this session cannot prompt for one.'
     Write-Host 'Known harness directories:'
     Write-TargetTable -Targets @(Get-HarnessTarget)
-    [Console]::Error.WriteLine('Choose a destination with -DestinationRoot, install into every detected harness with -All, or run the installer interactively.')
+    [Console]::Error.WriteLine("Choose a destination with $($flagNames.Destination), install into every detected harness with $($flagNames.All), or run the installer interactively.")
     exit 2
 }
 
@@ -197,7 +206,7 @@ foreach ($root in $roots) {
         Write-Host 'Cancelled. No changes were made.'
         return
     }
-    throw "Destination already exists: $existing. Re-run with -Update to replace the installed skill."
+    throw "Destination already exists: $existing. Re-run with $($flagNames.Update) to replace the installed skill."
 }
 
 function Install-Skill {

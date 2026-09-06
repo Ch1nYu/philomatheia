@@ -40,7 +40,13 @@ REQUIRED_PUBLIC = (
     "VERSION",
     "install.ps1",
     "install.sh",
+    "package.json",
+    "bin/philomatheia.js",
 )
+# Paths the npm package must carry, beyond the runtime the skill needs.
+REQUIRED_PUBLISHED = ("install.ps1", "install.sh", "bin/philomatheia.js")
+# Paths that belong to the repository only and must never reach a user.
+REPOSITORY_ONLY = ("tests", "scripts/check_package.py", "scripts/build_release.py", ".github")
 PUBLIC_MARKDOWN = tuple(path for path in REQUIRED_PUBLIC if path.endswith(".md")) + ("SKILL.md",)
 LINK_PATTERN = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 NAME_PATTERN = re.compile(r"^[a-z0-9-]{1,64}$")
@@ -59,6 +65,13 @@ def frontmatter(text: str) -> dict[str, str]:
         key, value = line.split(":", 1)
         values[key.strip()] = value.strip().strip("'\"")
     return values
+
+
+def published_covers(entry: str, relative: str) -> bool:
+    """Whether an npm ``files`` entry publishes a given repository path."""
+    entry = entry.strip("/")
+    relative = relative.strip("/")
+    return entry == relative or relative.startswith(entry + "/")
 
 
 def local_link_target(document: Path, target: str) -> Path | None:
@@ -95,6 +108,7 @@ def check() -> tuple[list[str], list[str]]:
         elif len(description) > 1024:
             errors.append("SKILL.md description exceeds 1024 characters")
 
+    version = ""
     version_path = ROOT / "VERSION"
     if version_path.exists():
         version = version_path.read_text(encoding="utf-8").strip()
@@ -104,6 +118,29 @@ def check() -> tuple[list[str], list[str]]:
             path = ROOT / relative
             if path.exists() and version not in path.read_text(encoding="utf-8"):
                 errors.append(f"{relative} does not mention VERSION {version}")
+
+    manifest_path = ROOT / "package.json"
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            errors.append(f"invalid package.json: {exc}")
+            manifest = {}
+        if version and manifest.get("version") != version:
+            errors.append(f"package.json version {manifest.get('version')!r} must match VERSION {version!r}")
+        entry_point = (manifest.get("bin") or {}).get("philomatheia")
+        if entry_point != "bin/philomatheia.js":
+            errors.append("package.json must expose bin.philomatheia as bin/philomatheia.js")
+        elif not (ROOT / entry_point).exists():
+            errors.append(f"package.json bin target is missing: {entry_point}")
+        published = tuple(manifest.get("files") or ())
+        for relative in REQUIRED_RUNTIME + REQUIRED_PUBLISHED:
+            if not any(published_covers(entry, relative) for entry in published):
+                errors.append(f"package.json files does not publish {relative}")
+        for entry in published:
+            for repository_only in REPOSITORY_ONLY:
+                if published_covers(entry, repository_only) or published_covers(repository_only, entry):
+                    errors.append(f"package.json files publishes repository-only path: {entry}")
 
     template_path = ROOT / "assets/learning-state.template.json"
     if template_path.exists():

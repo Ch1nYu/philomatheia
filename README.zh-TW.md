@@ -28,7 +28,13 @@ Philomatheia 會把學習目標轉成可見的知識圖，用小型適應性循�
 
 ### 安裝
 
-Clone 之後執行對應平台的 installer：
+有 Node 18 以上就不需要 clone：
+
+```sh
+npx philomatheia
+```
+
+或者 clone 之後執行對應平台的 installer：
 
 ```powershell
 # Windows
@@ -60,7 +66,9 @@ Select where to install philomatheia. Nothing is selected by default.
 | Claude Code | `$HOME/.claude/skills` |
 | 其他 | 選最後一項，或用 `--dest-root` / `-DestinationRoot` 指定 |
 
-直接按 Enter 代表不選任何目標，機器維持原狀。`--list` 或 `-ListTargets` 只印出同一份狀態表而不安裝，`--all` 或 `-All` 會選取所有已存在的 harness，`--dry-run` 或 `-WhatIf` 則預覽選定的目標路徑。若已存在同名 Skill，必須加上 `--update` / `-Update`，或在提示時確認替換，才會覆蓋。手動安裝、release 壓縮檔與其他 harness 的做法請看 [INSTALL.md](INSTALL.md)。
+直接按 Enter 代表不選任何目標，機器維持原狀。`--list` 或 `-ListTargets` 只印出同一份狀態表而不安裝，`--all` 或 `-All` 會選取所有已存在的 harness，`--dry-run` 或 `-WhatIf` 則預覽選定的目標路徑。若已存在同名 Skill，必須加上 `--update` / `-Update`，或在提示時確認替換，才會覆蓋。
+
+`npx philomatheia` 在所有平台使用同一組參數：`npx philomatheia --list`、`--all`、`--update`、`--dry-run`、`--dest-root PATH`。手動安裝、release 壓縮檔與其他 harness 的做法請看 [INSTALL.md](INSTALL.md)。
 
 ### 開始一個學習專案
 
@@ -132,6 +140,7 @@ Philomatheia 的設計與 validator 可以驗證這些操作效果：
 - Python 3.10 以上，用於建立與驗證專案狀態
 - 核心 Python scripts 不使用第三方套件
 - Windows installer 需要 PowerShell 7；macOS/Linux 使用 POSIX shell
+- 只有用 `npx` 安裝時才需要 Node.js 18 以上
 
 若學習內容包含近期變化或專業資料，仍可能需要外部搜尋工具。
 

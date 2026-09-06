@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SH = shutil.which("sh")
 PWSH = shutil.which("pwsh")
+NODE = shutil.which("node")
 
 # The installer's function block ends where argument parsing begins. Sourcing
 # only that block lets a test drive the selection prompt with a stubbed reader.
@@ -235,6 +236,61 @@ class WindowsInstallerSelectionTests(unittest.TestCase):
         self.assertIn("cannot prompt", completed.stdout + completed.stderr)
         self.assertFalse((self.home / ".claude" / "skills" / "philomatheia").exists())
         self.assertFalse((self.home / ".agents").exists())
+
+
+@unittest.skipUnless(NODE, "Node.js is unavailable")
+class NpmEntryPointTests(unittest.TestCase):
+    """The npx shim offers one flag surface and delegates to the real installer."""
+
+    def setUp(self):
+        self.directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.directory, True)
+        self.home = self.directory / "home"
+        (self.home / ".claude").mkdir(parents=True)
+
+    def run_shim(self, *arguments: str):
+        environment = dict(os.environ)
+        environment["HOME"] = str(self.home)
+        environment["USERPROFILE"] = str(self.home)
+        environment["PHILOMATHEIA_NON_INTERACTIVE"] = "1"
+        environment.pop("PHILOMATHEIA_DEST_ROOT", None)
+        return subprocess.run(
+            [NODE, str(ROOT / "bin" / "philomatheia.js"), *arguments],
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+
+    def test_posix_flags_work_on_every_platform(self):
+        listed = self.run_shim("--list")
+        self.assertEqual(listed.returncode, 0, listed.stderr)
+        self.assertIn("Claude Code", listed.stdout)
+        self.assertIn("detected, not installed", listed.stdout)
+
+    def test_destination_is_installed_and_replacement_needs_update(self):
+        destination = self.directory / "skills root"
+        installed = self.run_shim("--dest-root", str(destination))
+        self.assertEqual(installed.returncode, 0, installed.stderr)
+        self.assertTrue((destination / "philomatheia" / "SKILL.md").is_file())
+        self.assertFalse((destination / "philomatheia" / "README.md").exists())
+
+        refused = self.run_shim("--dest-root", str(destination))
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("--update", refused.stdout + refused.stderr)
+
+        updated = self.run_shim("--dest-root", str(destination), "--update")
+        self.assertEqual(updated.returncode, 0, updated.stderr)
+
+    def test_no_destination_exits_two_without_installing(self):
+        completed = self.run_shim()
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("--dest-root", completed.stdout + completed.stderr)
+        self.assertFalse((self.home / ".claude" / "skills" / "philomatheia").exists())
+
+    def test_unknown_flag_is_refused(self):
+        completed = self.run_shim("--nope")
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("Unknown option", completed.stderr)
 
 
 if __name__ == "__main__":

@@ -78,12 +78,47 @@ git push origin v0.1.0
 
 The `Release` workflow verifies the tag, rebuilds the archive, and creates the GitHub Release. Review the generated notes and release asset after the workflow completes.
 
+## npm publication
+
+`npx philomatheia` only works once the package is on the npm registry. Publish it after the GitHub repository is public, not before: the tarball contains the same skill files, so publishing it early makes the project public through a different door.
+
+Publishing to npm is close to irreversible. A version number can never be reused, and unpublishing is only permitted within 72 hours and only when nothing depends on the package; after that the remedy is `npm deprecate`, which leaves the code in place.
+
+The npm account email is public. It appears in the registry metadata for every package the account maintains:
+
+```sh
+curl -s https://registry.npmjs.org/philomatheia | jq .maintainers
+```
+
+Use an address you are willing to publish, and one you will still control for account recovery years from now.
+
+Before the first publish:
+
+- [ ] The name is still free: `npm view philomatheia` answers `404`.
+- [ ] `npm whoami` shows the intended account, and 2FA is enabled on it.
+- [ ] `package.json` version equals `VERSION`, and `python scripts/check_package.py` is green.
+- [ ] `npm pack --dry-run` lists the runtime, both installers, and `bin/philomatheia.js`, and no tests, workflows, or package tooling.
+- [ ] The packed tarball installs: `npm pack`, then `npx --yes ./philomatheia-<version>.tgz --list` from another directory.
+
+Then, with explicit approval from the owner:
+
+```sh
+npm publish
+```
+
+Verify afterwards from a directory that is not the clone:
+
+```sh
+npx philomatheia@<version> --list
+```
+
 ## Future releases
 
-1. Update `VERSION`, `CHANGELOG.md`, both READMEs when status or claims changed, and `CITATION.cff`.
+1. Update `VERSION`, `package.json`, `CHANGELOG.md`, both READMEs when status or claims changed, and `CITATION.cff`.
 2. Run the package checker, unit tests, installer smoke tests, and relevant behavioral forward tests.
 3. Commit the release change.
 4. Create and push the matching annotated tag.
 5. Verify the GitHub Actions run and downloadable archive.
+6. Publish the npm package with `npm publish`, then confirm with `npx philomatheia@<version> --list`.
 
 Do not publish a release when learning-effect claims exceed [EVALUATION.md](EVALUATION.md), source attribution is incomplete, or cross-platform validation is red.

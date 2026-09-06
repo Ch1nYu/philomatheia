@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- An npm entry point: `npx philomatheia` installs the skill without cloning the repository, on Node 18 or newer. The package carries the same runtime files and the same installers; `bin/philomatheia.js` only picks the platform's installer and translates the flags, so the selection prompt and detection logic stay single-sourced. The npx surface uses the POSIX flag names on every platform, including Windows.
+
 ### Changed
 
 - Limited the `Validate` push trigger to `main` and added a concurrency group, so a change is validated once instead of twice and superseded runs are cancelled.
