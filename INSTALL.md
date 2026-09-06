@@ -56,7 +56,7 @@ npx philomatheia --update
 npx philomatheia --dry-run
 ```
 
-Nothing is installed globally. To pin a version, name it: `npx philomatheia@0.1.0`.
+Nothing is installed globally. To pin a version, name it: `npx philomatheia@0.2.0`.
 
 ## Windows
 
@@ -135,7 +135,7 @@ Nothing else is needed at runtime. The tests, package tooling, and repository do
 Tagged releases provide `philomatheia-vX.Y.Z.zip` and a matching `.sha256` on the [GitHub Releases page](https://github.com/Ch1nYu/philomatheia/releases). Verify the checksum, then extract the top-level `philomatheia` folder into your skills directory.
 
 ```sh
-sha256sum -c philomatheia-v0.1.0.zip.sha256
+sha256sum -c philomatheia-v0.2.0.zip.sha256
 ```
 
 ## Verify and use

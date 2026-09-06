@@ -1,6 +1,6 @@
 {
   "name": "philomatheia",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Persistent, evidence-based learning Agent Skill with goal-specific knowledge maps and exact cross-session checkpoints.",
   "keywords": [
     "agent-skills",

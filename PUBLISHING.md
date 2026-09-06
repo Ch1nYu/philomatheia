@@ -4,9 +4,14 @@ Publishing changes external state. Run these steps only after the repository own
 
 ## Current state
 
-The repository is public and `v0.1.0` is tagged on `origin`. The GitHub steps below are done; they stay here as the record of what was applied and as the checklist for the next release. What remains unpublished is the npm package — see [npm publication](#npm-publication).
+The repository is public and `v0.1.0` is tagged on `origin`. The GitHub steps below are done; they stay here as the record of what was applied and as the checklist for every release after this one.
 
-Because `v0.1.0` is already public, a release of anything newer needs a version bump first: `VERSION`, `package.json`, `CHANGELOG.md`, and `CITATION.cff` move together, and the tag must equal `v$(cat VERSION)`.
+Outstanding:
+
+- `0.2.0` is prepared in `VERSION`, `package.json`, `CHANGELOG.md`, and `CITATION.cff`, but not tagged or released.
+- The npm package has never been published — see [npm publication](#npm-publication).
+
+A public tag is never moved. Releasing anything newer than `v0.1.0` means bumping first, with those four files moving together and the tag equal to `v$(cat VERSION)`.
 
 ## Pre-publication gate
 

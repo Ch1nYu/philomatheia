@@ -10,7 +10,7 @@
 
 Philomatheia turns a learning goal into a visible knowledge map, teaches through small adaptive loops, records what the learner can actually demonstrate, and resumes from an exact checkpoint across sessions. It runs on any agent harness that loads skills from a directory, including Codex and Claude Code.
 
-> Project status: `v0.1.0` alpha. The state model, validators, and installers are tested. Long-term learning-outcome improvements have not yet been established by a controlled or longitudinal study.
+> Project status: `v0.2.0` alpha. The state model, validators, and installers are tested. Long-term learning-outcome improvements have not yet been established by a controlled or longitudinal study.
 
 ## Why use it
 

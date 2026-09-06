@@ -10,7 +10,7 @@
 
 Philomatheia 會把學習目標轉成可見的知識圖，用小型適應性循環教學，區分「看過、能解釋、有人引導能做、能獨立做、能遷移」，並把精確 checkpoint 保存到學習專案。它可以在任何從目錄載入 skill 的 agent harness 上執行，包含 Codex 與 Claude Code。
 
-> 專案狀態：`v0.1.0` alpha。狀態模型、validator 與 installer 已測試；目前還沒有對照或長期研究能證明它會改善真實學習成果。
+> 專案狀態：`v0.2.0` alpha。狀態模型、validator 與 installer 已測試；目前還沒有對照或長期研究能證明它會改善真實學習成果。
 
 ## 它解決什麼問題
 

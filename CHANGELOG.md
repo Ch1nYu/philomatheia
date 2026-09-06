@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-06
+
+Breaking for unattended callers: running an installer with no arguments no longer installs anything. A script that relied on the old detect-and-install default must now pass `--all` / `-All`, or name a destination.
+
 ### Added
 
 - An npm entry point: `npx philomatheia` installs the skill without cloning the repository, on Node 18 or newer. The package carries the same runtime files and the same installers; `bin/philomatheia.js` only picks the platform's installer and translates the flags, so the selection prompt and detection logic stay single-sourced. The npx surface uses the POSIX flag names on every platform, including Windows.
@@ -41,5 +45,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - English and Traditional Chinese public documentation, evaluation protocol, security policy, acknowledgments, and MIT license.
 - Cross-platform GitHub Actions validation, unit tests, versioned release archives, and SHA-256 checksums.
 
-[Unreleased]: https://github.com/Ch1nYu/philomatheia/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Ch1nYu/philomatheia/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Ch1nYu/philomatheia/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Ch1nYu/philomatheia/releases/tag/v0.1.0
