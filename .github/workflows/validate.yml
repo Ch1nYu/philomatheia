@@ -74,6 +74,9 @@ jobs:
           .\install.ps1 -ListTargets
           .\install.ps1
           if ($LASTEXITCODE -eq 0) { throw "Installer picked a destination without being told to" }
+          # A PowerShell script that returns normally leaves $LASTEXITCODE alone,
+          # and the runner ends the step with exit $LASTEXITCODE.
+          $global:LASTEXITCODE = 0
           if (Test-Path (Join-Path $HOME '.claude\skills\philomatheia')) { throw "Installer wrote to a harness nobody selected" }
           if (Test-Path (Join-Path $HOME '.agents')) { throw "Installer created a harness directory nobody selected" }
           .\install.ps1 -All
@@ -151,19 +154,35 @@ jobs:
           npm pack --pack-destination "$RUNNER_TEMP"
           tarball="$RUNNER_TEMP/philomatheia-$(cat VERSION).tgz"
           skills="$RUNNER_TEMP/npx-skills"
-          npx --yes "$tarball" --list
-          npx --yes "$tarball" --dest-root "$skills"
+          # A tarball spec carries no package name for npx to derive the command
+          # from, so name both. Published, `npx philomatheia` needs neither.
+          run_npx() {
+            npx --yes --package "$tarball" -- philomatheia "$@"
+          }
+          run_npx --list
+          run_npx --dest-root "$skills"
           test -f "$skills/philomatheia/SKILL.md"
           test -f "$skills/philomatheia/scripts/validate_state.py"
           test ! -e "$skills/philomatheia/README.md"
           test ! -e "$skills/philomatheia/install.sh"
           test ! -e "$skills/philomatheia/package.json"
-          if npx --yes "$tarball" --dest-root "$skills"; then
+          if run_npx --dest-root "$skills"; then
             echo "npx entry point replaced an existing installation without --update" >&2
             exit 1
           fi
-          npx --yes "$tarball" --dest-root "$skills" --update
-          if npx --yes "$tarball"; then
+          run_npx --dest-root "$skills" --update
+          if run_npx; then
             echo "npx entry point picked a destination without being told to" >&2
             exit 1
           fi
+      - name: Link the binary under the name npx will resolve
+        shell: bash
+        env:
+          PHILOMATHEIA_NON_INTERACTIVE: "1"
+        run: |
+          tarball="$RUNNER_TEMP/philomatheia-$(cat VERSION).tgz"
+          prefix="$RUNNER_TEMP/npm-prefix"
+          npm install -g --prefix "$prefix" "$tarball"
+          export PATH="$prefix/bin:$PATH"
+          command -v philomatheia
+          philomatheia --list
